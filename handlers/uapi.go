@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/byuoitav/common/log"
-	"github.com/byuoitav/common/structs"
 	"github.com/byuoitav/uapi-translator/helpers"
+	"github.com/byuoitav/uapi-translator/structs"
 	"github.com/labstack/echo"
 )
 
