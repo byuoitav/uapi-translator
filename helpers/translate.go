@@ -47,9 +47,8 @@ func UAPItoAV(resource structs.Resource) (pubRoom base.PublicRoom, ne *nerr.E) {
 }
 
 // AVtoUAPI takes the AV-API PublicRoom structure and translates it into the UAPI Resource structure.
-func AVtoUAPI(pubRoom base.PublicRoom, fieldSets ...string) (resource structs.Resource, ne *nerr.E) {
+func AVtoUAPI(roomID string, pubRoom base.PublicRoom, fieldSets ...string) (resource structs.Resource, ne *nerr.E) {
 	// combine building and room to make a roomID
-	roomID := pubRoom.Room
 
 	// create top-level resource Metadata
 	resource.Metadata.FieldSetsAvailable = available
@@ -58,7 +57,7 @@ func AVtoUAPI(pubRoom base.PublicRoom, fieldSets ...string) (resource structs.Re
 
 	resource.Basic = structs.SubResource{}
 	resource.State = structs.SubResource{}
-	// resource.Config = structs.SubResource{}
+	resource.Config = structs.SubResource{}
 
 	// create SubResources for each field set
 	for _, fs := range fieldSets {
@@ -82,13 +81,13 @@ func AVtoUAPI(pubRoom base.PublicRoom, fieldSets ...string) (resource structs.Re
 
 func generateBasicSubResource(roomID string, pubRoom base.PublicRoom) (sub structs.SubResource) {
 	// set the metadata first, because if the values are not correct then we should return only the metadata
-	if len(pubRoom.Building) == 0 || len(pubRoom.Room) == 0 {
-		sub.Metadata.ValidationResponse = structs.ValidationResponse{
-			Code:    &NotFound,
-			Message: "resource not found, invalid room information",
-		}
-		return sub
-	}
+	// if len(pubRoom.Building) == 0 || len(pubRoom.Room) == 0 {
+	// 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
+	// 		Code:    &NotFound,
+	// 		Message: "resource not found, invalid room information",
+	// 	}
+	// 	return sub
+	// }
 
 	// create the metadata for the subresource
 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
@@ -111,7 +110,7 @@ func generateBasicSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 	sub.Building = structs.Property{
 		Type:        ReadOnly,
 		Key:         true,
-		Value:       pubRoom.Building,
+		Value:       strings.Split(roomID, "-")[0],
 		ValueArray:  nil,
 		Object:      nil,
 		ObjectArray: nil,
@@ -131,21 +130,21 @@ func generateBasicSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 
 func generateStateSubResource(roomID string, pubRoom base.PublicRoom) (sub structs.SubResource) {
 	// set the metadata first, because if the values are not correct then we should return only the metadata
-	if len(pubRoom.Building) == 0 || len(pubRoom.Room) == 0 {
-		sub.Metadata.ValidationResponse = structs.ValidationResponse{
-			Code:    &NotFound,
-			Message: "resource not found, invalid room information",
-		}
-		return sub
-	}
+	// if len(pubRoom.Building) == 0 || len(pubRoom.Room) == 0 {
+	// 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
+	// 		Code:    &NotFound,
+	// 		Message: "resource not found, invalid room information",
+	// 	}
+	// 	return sub
+	// }
 
-	if len(pubRoom.Displays) == 0 || len(pubRoom.AudioDevices) == 0 {
-		sub.Metadata.ValidationResponse = structs.ValidationResponse{
-			Code:    &NotFound,
-			Message: "unable to get state of the room",
-		}
-		return sub
-	}
+	// if len(pubRoom.Displays) == 0 || len(pubRoom.AudioDevices) == 0 {
+	// 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
+	// 		Code:    &NotFound,
+	// 		Message: "unable to get state of the room",
+	// 	}
+	// 	return sub
+	// }
 
 	// create the metadata for the subresource
 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
@@ -175,7 +174,7 @@ func generateStateSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 	sub.Building = structs.Property{
 		Type:        ReadOnly,
 		Key:         true,
-		Value:       pubRoom.Building,
+		Value:       strings.Split(roomID, "-")[0],
 		ValueArray:  nil,
 		Object:      nil,
 		ObjectArray: nil,

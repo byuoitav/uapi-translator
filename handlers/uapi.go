@@ -20,7 +20,7 @@ func SetState(context echo.Context) error {
 	var reqBody base.PublicRoom
 
 	// bind the body of the request from the UAPI
-	err := context.Bind(reqBody)
+	err := context.Bind(&reqBody)
 	if err != nil {
 		log.L.Error(color.HiRedString("Brwaap! Time to walk the plank! Failed to bind the request body from the University API : %s", err.Error()))
 		return context.JSON(http.StatusBadRequest, err)
@@ -34,7 +34,7 @@ func SetState(context echo.Context) error {
 	}
 
 	// translate the response back into the UAPI format
-	toReturn, ne := helpers.AVtoUAPI(resp, helpers.Basic, helpers.State)
+	toReturn, ne := helpers.AVtoUAPI(roomID, resp, helpers.Basic, helpers.State)
 	if ne != nil {
 		log.L.Errorf(color.HiRedString("Brwaap! Time to walk the plank! Failed to translate to UAPI format : %s", ne.String()))
 		return context.JSON(http.StatusInternalServerError, ne.String())
@@ -58,7 +58,7 @@ func GetState(context echo.Context) error {
 	}
 
 	// translate the response into the UAPI format
-	toReturn, ne := helpers.AVtoUAPI(resp, helpers.Basic, helpers.State)
+	toReturn, ne := helpers.AVtoUAPI(roomID, resp, helpers.Basic, helpers.State)
 	if ne != nil {
 		log.L.Errorf(color.HiRedString("Brwaap! Time to walk the plank! Failed to translate to UAPI format : %s", ne.String()))
 		return context.JSON(http.StatusInternalServerError, ne.String())

@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	log.L.Infof("%s %s %s", color.HiCyanString("Brwaap!"), color.HiGreenString("Skittles"), color.HiYellowString("the parrot!"))
+	log.L.Infof("%s %s %s", color.HiCyanString("Brwaap!"), color.HiGreenString("GoGo"), color.HiYellowString("the parrot!"))
 
 	port := ":9101"
 
