@@ -131,7 +131,7 @@ func AVGetState(roomID string) (toReturn base.PublicRoom, ne *nerr.E) {
 
 	split := strings.Split(roomID, "-")
 	toReturn.Building = split[0]
-	toReturn.Room = split[1]
+	toReturn.Room = roomID
 
 	log.L.Debugf("Yay! Skittles finished reading through device states for %s!", roomID)
 	return toReturn, ne

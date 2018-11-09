@@ -22,21 +22,21 @@ func SetState(context echo.Context) error {
 	// bind the body of the request from the UAPI
 	err := context.Bind(reqBody)
 	if err != nil {
-		log.L.Error(color.HiRedString("Uh oh, time to walk the plank! Failed to bind the request body from the University API : %s", err.Error()))
+		log.L.Error(color.HiRedString("Brwaap! Time to walk the plank! Failed to bind the request body from the University API : %s", err.Error()))
 		return context.JSON(http.StatusBadRequest, err)
 	}
 
 	// execute the request with the new body against the AV-API
 	resp, ne := AVSetState(roomID, reqBody)
 	if ne != nil {
-		log.L.Errorf(color.HiRedString("Uh oh, time to walk the plank! Failed to execute request against the AV-API : %s", ne.String()))
+		log.L.Errorf(color.HiRedString("Brwaap! Time to walk the plank! Failed to execute request against the AV-API : %s", ne.String()))
 		return context.JSON(http.StatusInternalServerError, ne.String())
 	}
 
 	// translate the response back into the UAPI format
 	toReturn, ne := helpers.AVtoUAPI(resp, helpers.Basic, helpers.State)
 	if ne != nil {
-		log.L.Errorf(color.HiRedString("Uh oh, time to walk the plank! Failed to translate to UAPI format : %s", ne.String()))
+		log.L.Errorf(color.HiRedString("Brwaap! Time to walk the plank! Failed to translate to UAPI format : %s", ne.String()))
 		return context.JSON(http.StatusInternalServerError, ne.String())
 	}
 
@@ -53,14 +53,14 @@ func GetState(context echo.Context) error {
 	// execute the request against the AV-API
 	resp, ne := AVGetState(roomID)
 	if ne != nil {
-		log.L.Errorf(color.HiRedString("Uh oh, time to walk the plank! Failed to execute request again the AV-API : %s", ne.String()))
+		log.L.Errorf(color.HiRedString("Brwaap! Time to walk the plank! Failed to execute request again the AV-API : %s", ne.String()))
 		return context.JSON(http.StatusInternalServerError, ne.String())
 	}
 
 	// translate the response into the UAPI format
 	toReturn, ne := helpers.AVtoUAPI(resp, helpers.Basic, helpers.State)
 	if ne != nil {
-		log.L.Errorf(color.HiRedString("Uh oh, time to walk the plank! Failed to translate to UAPI format : %s", ne.String()))
+		log.L.Errorf(color.HiRedString("Brwaap! Time to walk the plank! Failed to translate to UAPI format : %s", ne.String()))
 		return context.JSON(http.StatusInternalServerError, ne.String())
 	}
 

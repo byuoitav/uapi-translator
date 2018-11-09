@@ -28,7 +28,7 @@ type Link struct {
 
 // Metadata contains high level metadata about the Resource or SubResource
 type Metadata struct {
-	ValidationResponse ValidationResponse `json:"validation_response,omitempty"`
+	ValidationResponse interface{} `json:"validation_response,omitempty"`
 	// ValidationInformation []string           `json:"validation_information,omitempty"`
 	// Cache                 Cache              `json:"cache,omitempty"`
 	// Restricted            *bool              `json:"restricted,omitempty"`

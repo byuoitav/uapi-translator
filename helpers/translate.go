@@ -49,17 +49,16 @@ func UAPItoAV(resource structs.Resource) (pubRoom base.PublicRoom, ne *nerr.E) {
 // AVtoUAPI takes the AV-API PublicRoom structure and translates it into the UAPI Resource structure.
 func AVtoUAPI(pubRoom base.PublicRoom, fieldSets ...string) (resource structs.Resource, ne *nerr.E) {
 	// combine building and room to make a roomID
-	roomID := fmt.Sprintf("%s-%s", pubRoom.Building, pubRoom.Room)
+	roomID := pubRoom.Room
 
 	// create top-level resource Metadata
 	resource.Metadata.FieldSetsAvailable = available
 	resource.Metadata.FieldSetsReturned = fieldSets
 	resource.Metadata.FieldSetsDefault = def
-	resource.Metadata.ValidationResponse = structs.ValidationResponse{}
 
 	resource.Basic = structs.SubResource{}
 	resource.State = structs.SubResource{}
-	resource.Config = structs.SubResource{}
+	// resource.Config = structs.SubResource{}
 
 	// create SubResources for each field set
 	for _, fs := range fieldSets {
@@ -195,41 +194,54 @@ func generateStateSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 	var dispList = make(map[string]interface{})
 
 	for _, display := range pubRoom.Displays {
+		attributes := make(map[string]interface{})
+
+		if len(display.Name) > 0 {
+			attributes["name"] = structs.Property{
+				Type:        ReadOnly,
+				Key:         true,
+				Value:       display.Name,
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
+		if len(display.Power) > 0 {
+			attributes["power"] = structs.Property{
+				Type:        Modifiable,
+				Value:       display.Power,
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
+		if len(display.Input) > 0 {
+			attributes["input"] = structs.Property{
+				Type:        Modifiable,
+				Value:       display.Input,
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
+		if display.Blanked != nil {
+			attributes["blanked"] = structs.Property{
+				Type:        Modifiable,
+				Value:       fmt.Sprintf("%t", *display.Blanked),
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
 		p := structs.Property{
-			Type: Modifiable,
-			ObjectArray: map[string]interface{}{
-				"name": structs.Property{
-					Type:        ReadOnly,
-					Key:         true,
-					Value:       display.Name,
-					ValueArray:  nil,
-					Object:      nil,
-					ObjectArray: nil,
-				},
-				"power": structs.Property{
-					Type:        Modifiable,
-					Value:       display.Power,
-					ValueArray:  nil,
-					Object:      nil,
-					ObjectArray: nil,
-				},
-				"input": structs.Property{
-					Type:        Modifiable,
-					Value:       display.Input,
-					ValueArray:  nil,
-					Object:      nil,
-					ObjectArray: nil,
-				},
-				"blanked": structs.Property{
-					Type:        Modifiable,
-					Value:       fmt.Sprintf("%b", display.Blanked),
-					ValueArray:  nil,
-					Object:      nil,
-					ObjectArray: nil,
-				},
-			},
-			ValueArray: nil,
-			Object:     nil,
+			Type:        Modifiable,
+			ObjectArray: attributes,
+			ValueArray:  nil,
+			Object:      nil,
 		}
 
 		dispList[display.Name] = p
@@ -239,33 +251,64 @@ func generateStateSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 	var audioList = make(map[string]interface{})
 
 	for _, audio := range pubRoom.AudioDevices {
+		attributes := make(map[string]interface{})
+
+		if len(audio.Name) > 0 {
+			attributes["name"] = structs.Property{
+				Type:        ReadOnly,
+				Key:         true,
+				Value:       audio.Name,
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
+		if len(audio.Power) > 0 {
+			attributes["power"] = structs.Property{
+				Type:        Modifiable,
+				Value:       audio.Power,
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
+		if len(audio.Input) > 0 {
+			attributes["input"] = structs.Property{
+				Type:        Modifiable,
+				Value:       audio.Input,
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
+		if audio.Muted != nil {
+			attributes["muted"] = structs.Property{
+				Type:        Modifiable,
+				Value:       fmt.Sprintf("%t", *audio.Muted),
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
+		if audio.Volume != nil {
+			attributes["volume"] = structs.Property{
+				Type:        Modifiable,
+				Value:       fmt.Sprintf("%v", *audio.Volume),
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
 		a := structs.Property{
-			Type: Modifiable,
-			ObjectArray: map[string]interface{}{
-				"name": structs.Property{
-					Type:  ReadOnly,
-					Key:   true,
-					Value: audio.Name,
-				},
-				"power": structs.Property{
-					Type:  Modifiable,
-					Value: audio.Power,
-				},
-				"input": structs.Property{
-					Type:  Modifiable,
-					Value: audio.Input,
-				},
-				"muted": structs.Property{
-					Type:  Modifiable,
-					Value: fmt.Sprintf("%b", audio.Muted),
-				},
-				"volume": structs.Property{
-					Type:  Modifiable,
-					Value: fmt.Sprintf("%d", audio.Volume),
-				},
-			},
-			ValueArray: nil,
-			Object:     nil,
+			Type:        Modifiable,
+			ObjectArray: attributes,
+			ValueArray:  nil,
+			Object:      nil,
 		}
 
 		audioList[audio.Name] = a
