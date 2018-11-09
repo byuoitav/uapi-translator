@@ -11,8 +11,10 @@ import (
 
 	"github.com/byuoitav/av-api/base"
 	"github.com/byuoitav/common/db"
+	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/common/nerr"
 	"github.com/byuoitav/uapi-translator/helpers"
+	"github.com/fatih/color"
 )
 
 var client http.Client
@@ -23,6 +25,8 @@ func init() {
 
 // AVSetState executes a request against the AV-API to set the state of a room.
 func AVSetState(roomID string, reqBody base.PublicRoom) (toReturn base.PublicRoom, ne *nerr.E) {
+	log.L.Debugf("OK! Let's call the API to set the state of %s!", roomID)
+
 	// separate out the building and room IDs
 	split := strings.Split(roomID, "-")
 	building := split[0]
@@ -44,6 +48,8 @@ func AVSetState(roomID string, reqBody base.PublicRoom) (toReturn base.PublicRoo
 		ne.Addf("failed to make the request to send to the AV-API : %s", err.Error())
 		return toReturn, ne
 	}
+
+	log.L.Debugf("Skittles is sending a request to %s!", url)
 
 	// execute the request
 	resp, err := client.Do(req)
@@ -68,11 +74,15 @@ func AVSetState(roomID string, reqBody base.PublicRoom) (toReturn base.PublicRoo
 		return toReturn, ne
 	}
 
+	log.L.Debug(color.HiCyanString("Yay! Skittles got a response from the URL %s!", url))
+
 	return toReturn, ne
 }
 
 // AVGetState executes a request against the database to build the state of a room.
 func AVGetState(roomID string) (toReturn base.PublicRoom, ne *nerr.E) {
+	log.L.Debugf("Alrighty, X marks the Database! Let's get the state of %s!", roomID)
+
 	// get the device states from the database
 	deviceStates, err := db.GetDB().GetDeviceStatesByRoom(roomID)
 	if err != nil {
@@ -86,6 +96,8 @@ func AVGetState(roomID string) (toReturn base.PublicRoom, ne *nerr.E) {
 		ne.Addf("failed to get devices for room %s from the database : %s", roomID, err.Error())
 		return toReturn, ne
 	}
+
+	log.L.Debugf("Skittles is reading through the device states in %s!", roomID)
 
 	// iterate through the device states and build Displays and AudioDevices as necessary
 	for _, state := range deviceStates {
@@ -121,6 +133,7 @@ func AVGetState(roomID string) (toReturn base.PublicRoom, ne *nerr.E) {
 	toReturn.Building = split[0]
 	toReturn.Room = split[1]
 
+	log.L.Debugf("Yay! Skittles finished reading through device states for %s!", roomID)
 	return toReturn, ne
 }
 
