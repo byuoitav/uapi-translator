@@ -70,5 +70,14 @@ func GetState(context echo.Context) error {
 
 // GetConfig translates the body from the UAPI into the AV-API format and forwards the request.
 func GetConfig(context echo.Context) error {
-	return nil
+	roomID := context.Param("roomID")
+
+	log.L.Debugf("Brwaap! Getting configuration for %s!", roomID)
+
+	//Get the Configuration from the AV-API
+	resp, ne := AVGetConfig(roomID)
+	if ne != nil {
+		return ne
+	}
+	return context.JSON(http.StatusOK, resp)
 }

@@ -9,8 +9,10 @@ import (
 	"strings"
 
 	"github.com/byuoitav/common/jsonhttp"
+	"github.com/byuoitav/common/structs"
 
 	"github.com/byuoitav/av-api/base"
+	"github.com/byuoitav/av-api/inputgraph"
 	"github.com/byuoitav/common/db"
 	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/common/nerr"
@@ -131,6 +133,44 @@ func AVGetState(roomID string) (base.PublicRoom, *nerr.E) {
 }
 
 // AVGetConfig executes a request against the AV-API to get the configuration of a room.
-func AVGetConfig(roomID string) (ne *nerr.E) {
-	return ne
+func AVGetConfig(roomID string) (inputgraph.ReachableRoomConfig, *nerr.E) {
+	log.L.Debugf("TODO: PIRATE DEBUG STATEMENT: %s", roomID)
+
+	var toReturn inputgraph.ReachableRoomConfig
+
+	//Get the room config from the Database
+	building := strings.Split(roomID, "-")[0]
+	roomName := strings.Split(roomID, "-")[1]
+	room, err := db.GetDB().GetRoom(fmt.Sprintf("%s-%s", building, roomName))
+
+	if err != nil {
+		return toReturn, nerr.Translate(err).Addf("failed to get configuration for room %s from the database", roomID)
+	}
+
+	//We need the video device reachability stuff so we can filter by that
+	toReturn, ne := inputgraph.GetVideoDeviceReachability(room)
+	if err != nil {
+		return toReturn, ne
+	}
+
+	//TODO Filter out devices that don't have AudioOut, AudioIn, or aren't in the InputReachability Map
+	//I think this should filter out non-audio(in/out) stuff. Now we need to filter out the stuff outside of the input reachability map
+	//And get rid of the other stuff that's marked out
+	var devices []structs.Device
+	for _, device := range toReturn.Devices {
+		for _, role := range device.Roles {
+			if role.ID == "AudioIn" || role.ID == "AudioOut" {
+				devices = append(devices, device)
+			} else {
+				//Just to show what is not getting added, can be removed
+				log.L.Infof("%s", device.ID)
+			}
+		}
+	}
+
+	//Set the devices to the filtered devices
+	toReturn.Devices = devices
+
+	log.L.Debugf("Avast ye! Here lies yer configuration for %s!", roomID)
+	return toReturn, nil
 }
