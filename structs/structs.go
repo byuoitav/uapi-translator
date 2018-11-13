@@ -1,5 +1,7 @@
 package structs
 
+import "strings"
+
 // Resource is the base level object returned by the UAPI.
 type Resource struct {
 	Links    map[string]Link `json:"links,omitempty"`
@@ -61,4 +63,48 @@ type Property struct {
 	// Domain          string        `json:"domain,omitempty"`
 	// LongDescription string        `json:"long_description,omitempty"`
 	// RelatedResource string        `json:"related_resource,omitempty"`
+}
+
+type ReachableRoomConfig struct {
+	Room
+	InputReachability map[string][]string `json:"input_reachability"`
+}
+
+type Room struct {
+	ID          string   `json:"_id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Designation string   `json:"designation"`
+	Devices     []Device `json:"devices,omitempty"`
+	Tags        []string `json:"tags,omitempty"`
+}
+
+type Device struct {
+	ID          string     `json:"_id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	DisplayName string     `json:"display_name"`
+	Type        DeviceType `json:"type,omitempty"`
+	Roles       []Role     `json:"roles"`
+	Tags        []string   `json:"tags,omitempty"`
+}
+
+type DeviceType struct {
+	ID          string `json:"_id"`
+	Description string `json:description,omitempty"`
+}
+
+type Role struct {
+	ID string `json:"_id"`
+}
+
+// HasRole checks to see if the given device has the given role.
+func (d *Device) HasRole(role string) bool {
+	role = strings.ToLower(role)
+	for i := range d.Roles {
+		if strings.EqualFold(strings.ToLower(d.Roles[i].ID), role) {
+			return true
+		}
+	}
+	return false
 }

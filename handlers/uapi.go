@@ -77,7 +77,12 @@ func GetConfig(context echo.Context) error {
 	//Get the Configuration from the AV-API
 	resp, ne := AVGetConfig(roomID)
 	if ne != nil {
+		log.L.Debugf("%s", ne.String())
 		return ne
 	}
+
+	//Translate
+
+	//Return
 	return context.JSON(http.StatusOK, resp)
 }
