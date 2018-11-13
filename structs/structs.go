@@ -6,19 +6,19 @@ import "strings"
 type Resource struct {
 	Links    map[string]Link `json:"links,omitempty"`
 	Metadata Metadata        `json:"metadata,omitempty"`
-	Basic    SubResource     `json:"basic,omitempty"`
-	State    SubResource     `json:"av_state,omitempty"`
-	Config   SubResource     `json:"av_config,omitempty"`
+	Basic    interface{}     `json:"basic,omitempty"`
+	State    interface{}     `json:"av_state,omitempty"`
+	Config   interface{}     `json:"av_config,omitempty"`
 }
 
 // SubResource is an object that helps to comprise a Resource.
 type SubResource struct {
 	Links        map[string]Link `json:"links,omitempty"`
 	Metadata     Metadata        `json:"metadata,omitempty"`
-	Building     Property        `json:"building,omitempty"`
-	Room         Property        `json:"room,omitempty"`
-	Displays     Property        `json:"displays,omitempty"`
-	AudioDevices Property        `json:"audio_devices,omitempty"`
+	Building     interface{}     `json:"building,omitempty"`
+	Room         interface{}     `json:"room,omitempty"`
+	Displays     interface{}     `json:"displays,omitempty"`
+	AudioDevices interface{}     `json:"audio_devices,omitempty"`
 }
 
 // Link contains information about accessing the Resource.
@@ -65,11 +65,13 @@ type Property struct {
 	// RelatedResource string        `json:"related_resource,omitempty"`
 }
 
+// ReachableRoomConfig represents the amount of data we will report back about the room.
 type ReachableRoomConfig struct {
 	Room
 	InputReachability map[string][]string `json:"input_reachability"`
 }
 
+// Room is the filtered Room struct for returning from the UAPI.
 type Room struct {
 	ID          string   `json:"_id"`
 	Name        string   `json:"name"`
@@ -79,6 +81,7 @@ type Room struct {
 	Tags        []string `json:"tags,omitempty"`
 }
 
+// Device is the filtered Device struct for returning from the UAPI.
 type Device struct {
 	ID          string     `json:"_id"`
 	Name        string     `json:"name"`
@@ -89,11 +92,13 @@ type Device struct {
 	Tags        []string   `json:"tags,omitempty"`
 }
 
+// DeviceType is the filtered DeviceType struct for returning from the UAPI.
 type DeviceType struct {
 	ID          string `json:"_id"`
-	Description string `json:description,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
+// Role is the filtered Role struct for returning from the UAPI.
 type Role struct {
 	ID string `json:"_id"`
 }

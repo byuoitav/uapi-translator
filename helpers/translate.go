@@ -55,20 +55,19 @@ func AVtoUAPI(roomID string, pubRoom base.PublicRoom, fieldSets ...string) (reso
 	resource.Metadata.FieldSetsReturned = fieldSets
 	resource.Metadata.FieldSetsDefault = def
 
-	resource.Basic = structs.SubResource{}
-	resource.State = structs.SubResource{}
-	resource.Config = structs.SubResource{}
-
 	// create SubResources for each field set
 	for _, fs := range fieldSets {
 		switch fs {
 		case Basic:
+			resource.Basic = structs.SubResource{}
 			resource.Basic = generateBasicSubResource(roomID, pubRoom)
 			break
 		case State:
+			resource.State = structs.SubResource{}
 			resource.State = generateStateSubResource(roomID, pubRoom)
 			break
 		case Config:
+			resource.Config = structs.SubResource{}
 			resource.Config = generateConfigSubResource(roomID, pubRoom)
 			break
 		default:
