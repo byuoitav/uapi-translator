@@ -80,6 +80,8 @@ func AVtoUAPI(roomID string, pubRoom base.PublicRoom, fieldSets ...string) (reso
 }
 
 func generateBasicSubResource(roomID string, pubRoom base.PublicRoom) (sub structs.SubResource) {
+	// TODO: have something to handle failure cases
+
 	// set the metadata first, because if the values are not correct then we should return only the metadata
 	// if len(pubRoom.Building) == 0 || len(pubRoom.Room) == 0 {
 	// 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
@@ -129,6 +131,8 @@ func generateBasicSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 }
 
 func generateStateSubResource(roomID string, pubRoom base.PublicRoom) (sub structs.SubResource) {
+	// TODO: have something to handle failure cases
+
 	// set the metadata first, because if the values are not correct then we should return only the metadata
 	// if len(pubRoom.Building) == 0 || len(pubRoom.Room) == 0 {
 	// 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
@@ -331,6 +335,8 @@ func generateStateSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 }
 
 func generateConfigSubResource(roomID string, pubRoom base.PublicRoom) (sub structs.SubResource) {
+	// TODO: have something to handle failure cases
+
 	// create links for the subresource
 	var con structs.Link
 
