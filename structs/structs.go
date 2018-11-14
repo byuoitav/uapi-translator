@@ -13,8 +13,6 @@ type Resource struct {
 
 // SubResource is an object that helps to comprise a Resource.
 type SubResource struct {
-	Devices           Property        `json:"devices,omitempty"`
-	InputReachability Property        `json:"input_reachability,omitempty"`
 	Links             map[string]Link `json:"links,omitempty"`
 	Metadata          Metadata        `json:"metadata,omitempty"`
 	Building          interface{}     `json:"building,omitempty"`
