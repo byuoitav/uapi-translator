@@ -47,7 +47,7 @@ func UAPItoAV(resource structs.Resource) (pubRoom base.PublicRoom, ne *nerr.E) {
 }
 
 // AVtoUAPI takes the AV-API PublicRoom structure and translates it into the UAPI Resource structure.
-func AVtoUAPI(roomID string, pubRoom base.PublicRoom, fieldSets ...string) (resource structs.Resource, ne *nerr.E) {
+func AVtoUAPI(roomID string, pubRoom base.PublicRoom, reachRoom structs.ReachableRoomConfig, fieldSets ...string) (resource structs.Resource, ne *nerr.E) {
 	// combine building and room to make a roomID
 
 	// create top-level resource Metadata
@@ -69,7 +69,7 @@ func AVtoUAPI(roomID string, pubRoom base.PublicRoom, fieldSets ...string) (reso
 			resource.State = generateStateSubResource(roomID, pubRoom)
 			break
 		case Config:
-			resource.Config = generateConfigSubResource(roomID, pubRoom)
+			resource.Config = generateConfigSubResource(roomID, reachRoom)
 			break
 		default:
 			break
@@ -330,7 +330,7 @@ func generateStateSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 	return sub
 }
 
-func generateConfigSubResource(roomID string, pubRoom base.PublicRoom) (sub structs.SubResource) {
+func generateConfigSubResource(roomID string, pubRoom structs.ReachableRoomConfig) (sub structs.SubResource) {
 	// create links for the subresource
 	var con structs.Link
 
@@ -341,6 +341,134 @@ func generateConfigSubResource(roomID string, pubRoom base.PublicRoom) (sub stru
 	sub.Links = make(map[string]structs.Link)
 
 	sub.Links[Config] = con
+
+	// create the metadata for the subresource
+	sub.Metadata.ValidationResponse = structs.ValidationResponse{
+		Code:    &Okay,
+		Message: "success",
+	}
+
+	// set the properties on the subresource
+	sub.Building = structs.Property{
+		Type:        ReadOnly,
+		Key:         true,
+		Value:       strings.Split(roomID, "-")[0],
+		ValueArray:  nil,
+		Object:      nil,
+		ObjectArray: nil,
+	}
+
+	sub.Room = structs.Property{
+		Type:        ReadOnly,
+		Key:         true,
+		Value:       roomID,
+		ValueArray:  nil,
+		Object:      nil,
+		ObjectArray: nil,
+	}
+
+	// create a list of Properties based on the displays.
+	var deviceList = make(map[string]interface{})
+
+	for _, device := range pubRoom.Devices {
+		attributes := make(map[string]interface{})
+
+		if len(device.ID) > 0 {
+			attributes["id"] = structs.Property{
+				Type:        ReadOnly,
+				Key:         true,
+				Value:       device.ID,
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
+		if len(device.Name) > 0 {
+			attributes["name"] = structs.Property{
+				Type:        ReadOnly,
+				Key:         true,
+				Value:       device.Name,
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
+		if len(device.Description) > 0 {
+			attributes["description"] = structs.Property{
+				Type:        ReadOnly,
+				Value:       device.Description,
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
+		if len(device.DisplayName) > 0 {
+			attributes["display_name"] = structs.Property{
+				Type:        ReadOnly,
+				Value:       device.DisplayName,
+				ValueArray:  nil,
+				Object:      nil,
+				ObjectArray: nil,
+			}
+		}
+
+		if len(device.Type.ID) > 0 {
+			deviceType := make(map[string]interface{})
+			deviceType["id"] = structs.Property{
+				Type:  ReadOnly,
+				Key:   true,
+				Value: device.Type.ID,
+			}
+			if len(device.Type.Description) > 0 {
+				deviceType["description"] = structs.Property{
+					Type:  ReadOnly,
+					Value: device.Type.Description,
+				}
+			}
+			attributes["device_type"] = deviceType
+		}
+
+		if len(device.Roles) > 0 {
+			var roleArray []string
+			for _, role := range device.Roles {
+				roleArray = append(roleArray, role.ID)
+			}
+			attributes["roles"] = structs.Property{
+				Type:       ReadOnly,
+				ValueArray: roleArray,
+			}
+		}
+
+		p := structs.Property{
+			Type:        ReadOnly,
+			ObjectArray: attributes,
+			ValueArray:  nil,
+			Object:      nil,
+		}
+
+		deviceList[device.ID] = p
+	}
+
+	sub.Devices = structs.Property{
+		Type:        ReadOnly,
+		ObjectArray: deviceList,
+		ValueArray:  nil,
+		Object:      nil,
+	}
+
+	reachArray := make(map[string]interface{})
+	for k, v := range pubRoom.InputReachability {
+		reachArray[k] = structs.ReachabilityGraph{Displays: v}
+	}
+	//Add the input reachability graph
+	sub.InputReachability = structs.Property{
+		Type:        ReadOnly,
+		ObjectArray: reachArray,
+	}
+
 	return sub
 }
 

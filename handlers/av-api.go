@@ -169,7 +169,6 @@ func AVGetConfig(roomID string) (structs.ReachableRoomConfig, *nerr.E) {
 
 	defer resp.Body.Close()
 
-	log.L.Info(string(b))
 	// unmarshal the response
 	err = json.Unmarshal(b, &toReturn)
 	if err != nil {

@@ -13,12 +13,14 @@ type Resource struct {
 
 // SubResource is an object that helps to comprise a Resource.
 type SubResource struct {
-	Links        map[string]Link `json:"links,omitempty"`
-	Metadata     Metadata        `json:"metadata,omitempty"`
-	Building     Property        `json:"building,omitempty"`
-	Room         Property        `json:"room,omitempty"`
-	Displays     Property        `json:"displays,omitempty"`
-	AudioDevices Property        `json:"audio_devices,omitempty"`
+	Links             map[string]Link `json:"links,omitempty"`
+	Metadata          Metadata        `json:"metadata,omitempty"`
+	Building          Property        `json:"building,omitempty"`
+	Room              Property        `json:"room,omitempty"`
+	Displays          Property        `json:"displays,omitempty"`
+	AudioDevices      Property        `json:"audio_devices,omitempty"`
+	Devices           Property        `json:"devices,omitempty"`
+	InputReachability Property        `json:"input_reachability,omitempty"`
 }
 
 // Link contains information about accessing the Resource.
@@ -68,6 +70,11 @@ type Property struct {
 type ReachableRoomConfig struct {
 	Room
 	InputReachability map[string][]string `json:"input_reachability"`
+}
+
+//TODO I'm unsure if this is a reasonable thing to do
+type ReachabilityGraph struct {
+	Displays []string
 }
 
 type Room struct {

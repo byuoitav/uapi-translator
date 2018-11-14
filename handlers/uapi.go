@@ -8,8 +8,24 @@ import (
 	"github.com/byuoitav/av-api/base"
 	"github.com/byuoitav/common/log"
 	"github.com/byuoitav/uapi-translator/helpers"
+	"github.com/byuoitav/uapi-translator/structs"
 	"github.com/labstack/echo"
 )
+
+var nilPubRoom = base.PublicRoom{
+	Building: "",
+	Room:     "",
+}
+var nilUAPIRoom = structs.Room{
+	ID:          "",
+	Name:        "",
+	Description: "",
+	Designation: "",
+}
+var nilReachableRoom = structs.ReachableRoomConfig{
+	Room:              nilUAPIRoom,
+	InputReachability: make(map[string][]string),
+}
 
 // SetState translates the body from the UAPI into the AV-API format and forwards the request.
 func SetState(context echo.Context) error {
@@ -34,7 +50,7 @@ func SetState(context echo.Context) error {
 	}
 
 	// translate the response back into the UAPI format
-	toReturn, ne := helpers.AVtoUAPI(roomID, resp, helpers.Basic, helpers.State)
+	toReturn, ne := helpers.AVtoUAPI(roomID, resp, nilReachableRoom, helpers.Basic, helpers.State)
 	if ne != nil {
 		log.L.Errorf(color.HiRedString("Brwaap! Time to walk the plank! Failed to translate to UAPI format : %s", ne.String()))
 		return context.JSON(http.StatusInternalServerError, ne.String())
@@ -58,7 +74,7 @@ func GetState(context echo.Context) error {
 	}
 
 	// translate the response into the UAPI format
-	toReturn, ne := helpers.AVtoUAPI(roomID, resp, helpers.Basic, helpers.State)
+	toReturn, ne := helpers.AVtoUAPI(roomID, resp, nilReachableRoom, helpers.Basic, helpers.State)
 	if ne != nil {
 		log.L.Errorf(color.HiRedString("Brwaap! Time to walk the plank! Failed to translate to UAPI format : %s", ne.String()))
 		return context.JSON(http.StatusInternalServerError, ne.String())
@@ -82,7 +98,12 @@ func GetConfig(context echo.Context) error {
 	}
 
 	//Translate
+	toReturn, ne := helpers.AVtoUAPI(roomID, nilPubRoom, resp, helpers.Config)
+	if ne != nil {
+		log.L.Errorf(color.HiRedString("Brwaap! Time to walk the plank! Failed to translate to UAPI format : %s", ne.String()))
+		return context.JSON(http.StatusInternalServerError, ne.String())
+	}
 
 	//Return
-	return context.JSON(http.StatusOK, resp)
+	return context.JSON(http.StatusOK, toReturn)
 }
