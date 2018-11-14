@@ -55,20 +55,19 @@ func AVtoUAPI(roomID string, pubRoom base.PublicRoom, reachRoom structs.Reachabl
 	resource.Metadata.FieldSetsReturned = fieldSets
 	resource.Metadata.FieldSetsDefault = def
 
-	resource.Basic = structs.SubResource{}
-	resource.State = structs.SubResource{}
-	resource.Config = structs.SubResource{}
-
 	// create SubResources for each field set
 	for _, fs := range fieldSets {
 		switch fs {
 		case Basic:
+			resource.Basic = structs.SubResource{}
 			resource.Basic = generateBasicSubResource(roomID, pubRoom)
 			break
 		case State:
+			resource.State = structs.SubResource{}
 			resource.State = generateStateSubResource(roomID, pubRoom)
 			break
 		case Config:
+			resource.Config = structs.SubResource{}
 			resource.Config = generateConfigSubResource(roomID, reachRoom)
 			break
 		default:
@@ -80,6 +79,8 @@ func AVtoUAPI(roomID string, pubRoom base.PublicRoom, reachRoom structs.Reachabl
 }
 
 func generateBasicSubResource(roomID string, pubRoom base.PublicRoom) (sub structs.SubResource) {
+	// TODO: have something to handle failure cases
+
 	// set the metadata first, because if the values are not correct then we should return only the metadata
 	// if len(pubRoom.Building) == 0 || len(pubRoom.Room) == 0 {
 	// 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
@@ -129,6 +130,8 @@ func generateBasicSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 }
 
 func generateStateSubResource(roomID string, pubRoom base.PublicRoom) (sub structs.SubResource) {
+	// TODO: have something to handle failure cases
+
 	// set the metadata first, because if the values are not correct then we should return only the metadata
 	// if len(pubRoom.Building) == 0 || len(pubRoom.Room) == 0 {
 	// 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
@@ -331,6 +334,7 @@ func generateStateSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 }
 
 func generateConfigSubResource(roomID string, pubRoom structs.ReachableRoomConfig) (sub structs.SubResource) {
+	// TODO: have something to handle failure cases
 	// create links for the subresource
 	var con structs.Link
 

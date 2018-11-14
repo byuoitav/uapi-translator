@@ -31,12 +31,25 @@ var nilReachableRoom = structs.ReachableRoomConfig{
 func SetState(context echo.Context) error {
 	roomID := context.Param("roomID")
 
+	// check the JWT token
+	ok, err := helpers.AuthenticatedByJWT(context, "write-state")
+	if err != nil {
+		log.L.Error(color.HiRedString("Brwaap! Error authenticating! : %s", err.Error()))
+		return context.JSON(http.StatusInternalServerError, "There was a problem")
+	}
+
+	if !ok {
+		log.L.Error(color.HiRedString("Brwaap! The scalawag did not meet authentication checks!"))
+		return context.JSON(http.StatusForbidden, "Unauthorized")
+	}
+
+	// proceed because the JWT token checks passed
 	log.L.Debug(color.HiMagentaString("Brwaap! Setting state for %s!", roomID))
 
 	var reqBody base.PublicRoom
 
 	// bind the body of the request from the UAPI
-	err := context.Bind(&reqBody)
+	err = context.Bind(&reqBody)
 	if err != nil {
 		log.L.Error(color.HiRedString("Brwaap! Time to walk the plank! Failed to bind the request body from the University API : %s", err.Error()))
 		return context.JSON(http.StatusBadRequest, err)
@@ -64,6 +77,18 @@ func SetState(context echo.Context) error {
 func GetState(context echo.Context) error {
 	roomID := context.Param("roomID")
 
+	// check the JWT token
+	// ok, err := helpers.AuthenticatedByJWT(context, "read-state")
+	// if err != nil {
+	// 	log.L.Error(color.HiRedString("Brwaap! Error authenticating! : %s", err.Error()))
+	// 	return context.JSON(http.StatusInternalServerError, "There was a problem")
+	// }
+
+	// if !ok {
+	// 	log.L.Error(color.HiRedString("Brwaap! The scalawag did not meet authentication checks!"))
+	// 	return context.JSON(http.StatusForbidden, "Unauthorized")
+	// }
+
 	log.L.Debugf("Brwaap! Getting state for %s!", roomID)
 
 	// execute the request against the AV-API
@@ -87,6 +112,18 @@ func GetState(context echo.Context) error {
 // GetConfig translates the body from the UAPI into the AV-API format and forwards the request.
 func GetConfig(context echo.Context) error {
 	roomID := context.Param("roomID")
+
+	// check the JWT token
+	ok, err := helpers.AuthenticatedByJWT(context, "read-config")
+	if err != nil {
+		log.L.Error(color.HiRedString("Brwaap! Error authenticating! : %s", err.Error()))
+		return context.JSON(http.StatusInternalServerError, "There was a problem")
+	}
+
+	if !ok {
+		log.L.Error(color.HiRedString("Brwaap! The scalawag did not meet authentication checks!"))
+		return context.JSON(http.StatusForbidden, "Unauthorized")
+	}
 
 	log.L.Debugf("Brwaap! Getting configuration for %s!", roomID)
 

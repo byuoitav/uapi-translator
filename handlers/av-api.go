@@ -32,45 +32,10 @@ func AVSetState(roomID string, reqBody base.PublicRoom) (base.PublicRoom, *nerr.
 
 	var toReturn base.PublicRoom
 
-	// separate out the building and room IDs
-	split := strings.Split(roomID, "-")
-	building := split[0]
-	room := split[1]
-
-	// build the URL to hit the AV-API
-	url := fmt.Sprintf("http://%s/buildings/%s/rooms/%s", os.Getenv("AV_API_ADDRESS"), building, room)
-
-	// create the request
-	req, err := jsonhttp.CreateRequest("PUT", url, reqBody, nil)
+	err := executeAPIRequest(helpers.SetState, roomID, &toReturn, reqBody)
 	if err != nil {
-		return toReturn, nerr.Translate(err).Add("failed to make the request to send to the AV-API")
+		return toReturn, err
 	}
-
-	auth.AddAuthToRequest(req)
-
-	log.L.Debugf("GoGo is sending a request to %s!", url)
-
-	// execute the request
-	resp, err := client.Do(req)
-	if err != nil {
-		return toReturn, nerr.Translate(err).Add("failed to execute request against the AV-API")
-	}
-
-	// read the response
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return toReturn, nerr.Translate(err).Add("failed to read the response from the AV-API")
-	}
-
-	defer resp.Body.Close()
-
-	// unmarshal the response
-	err = json.Unmarshal(b, &toReturn)
-	if err != nil {
-		return toReturn, nerr.Translate(err).Add("failed to unmarshal the response from the AV-API")
-	}
-
-	log.L.Debug(color.HiCyanString("Yay! GoGo got a response from the URL %s!", url))
 
 	return toReturn, nil
 }
@@ -137,45 +102,11 @@ func AVGetConfig(roomID string) (structs.ReachableRoomConfig, *nerr.E) {
 
 	var toReturn structs.ReachableRoomConfig
 
-	// separate out the building and room IDs
-	split := strings.Split(roomID, "-")
-	building := split[0]
-	room := split[1]
-
-	// build the URL to hit the AV-API
-	url := fmt.Sprintf("http://%s/buildings/%s/rooms/%s/configuration", os.Getenv("AV_API_ADDRESS"), building, room)
-
-	// create the request
-	req, err := jsonhttp.CreateRequest("GET", url, nil, nil)
+	err := executeAPIRequest(helpers.Config, roomID, &toReturn, nil)
 	if err != nil {
-		return toReturn, nerr.Translate(err).Add("failed to make the request to send to the AV-API")
+		return toReturn, err
 	}
 
-	auth.AddAuthToRequest(req)
-
-	log.L.Debugf("GoGo is sending a request to %s!", url)
-
-	// execute the request
-	resp, err := client.Do(req)
-	if err != nil {
-		return toReturn, nerr.Translate(err).Add("failed to execute request against the AV-API")
-	}
-
-	// read the response
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return toReturn, nerr.Translate(err).Add("failed to read the response from the AV-API")
-	}
-
-	defer resp.Body.Close()
-
-	// unmarshal the response
-	err = json.Unmarshal(b, &toReturn)
-	if err != nil {
-		return toReturn, nerr.Translate(err).Add("failed to unmarshal the response from the AV-API")
-	}
-
-	log.L.Debug(color.HiCyanString("Yay! GoGo got a response from the URL %s!", url))
 	//Filter out the devices that do not have the role of audio in/out and are not in the input reachability graph
 	var devices []structs.Device
 	for _, device := range toReturn.Devices {
@@ -194,13 +125,81 @@ func isInGraph(graph map[string][]string, device structs.Device) bool {
 	for key, outputs := range graph {
 		if device.Name == key {
 			return true
-		} else {
-			for _, out := range outputs {
-				if device.Name == out {
-					return true
-				}
+		}
+
+		for _, out := range outputs {
+			if device.Name == out {
+				return true
 			}
 		}
 	}
 	return false
+}
+
+func executeAPIRequest(endpoint string, roomID string, toReturn interface{}, reqBody interface{}) *nerr.E {
+	// separate out the building and room IDs
+	split := strings.Split(roomID, "-")
+	building := split[0]
+	room := split[1]
+
+	var url string
+	var method string
+
+	// build the URL to hit the AV-API
+	switch endpoint {
+	case helpers.GetState:
+		url = fmt.Sprintf("http://%s/buildings/%s/rooms/%s", os.Getenv("AV_API_ADDRESS"), building, room)
+		method = "GET"
+	case helpers.SetState:
+		url = fmt.Sprintf("http://%s/buildings/%s/rooms/%s", os.Getenv("AV_API_ADDRESS"), building, room)
+		method = "PUT"
+	case helpers.Config:
+		url = fmt.Sprintf("http://%s/buildings/%s/rooms/%s/configuration", os.Getenv("AV_API_ADDRESS"), building, room)
+		method = "GET"
+	}
+
+	// create the request
+	var req *http.Request
+	var err error
+
+	if reqBody == nil {
+		req, err = jsonhttp.CreateRequest(method, url, nil, nil)
+		if err != nil {
+			return nerr.Translate(err).Add("failed to make the request to send to the AV-API")
+		}
+	} else {
+		req, err = jsonhttp.CreateRequest(method, url, reqBody, nil)
+		if err != nil {
+			return nerr.Translate(err).Add("failed to make the request to send to the AV-API")
+		}
+
+	}
+
+	auth.AddAuthToRequest(req)
+
+	log.L.Debugf("GoGo is sending a request to %s!", url)
+
+	// execute the request
+	resp, err := client.Do(req)
+	if err != nil {
+		return nerr.Translate(err).Add("failed to execute request against the AV-API")
+	}
+
+	// read the response
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nerr.Translate(err).Add("failed to read the response from the AV-API")
+	}
+
+	defer resp.Body.Close()
+
+	// unmarshal the response
+	err = json.Unmarshal(b, &toReturn)
+	if err != nil {
+		return nerr.Translate(err).Add("failed to unmarshal the response from the AV-API")
+	}
+
+	log.L.Debug(color.HiCyanString("Yay! GoGo got a response from the URL %s!", url))
+
+	return nil
 }
