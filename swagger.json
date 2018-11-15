@@ -1,0 +1,261 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "BYU OIT AV Pi Control API",
+    "version": "1.0.0",
+    "title": "av_rooms",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "tags": [
+    {
+      "name": "av_state",
+      "description": "Everything about your Pis"
+    },
+    {
+      "name": "av_config",
+      "description": "Access to Room configurations"
+    }
+  ],
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/av_rooms/av_state/{roomID}": {
+      "get": {
+        "tags": [
+          "av_state"
+        ],
+        "summary": "Get a room state",
+        "description": "",
+        "operationId": "getState",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "roomID",
+            "in": "path",
+            "description": "ID of room to get state of",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "success"
+          },
+          "404": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "av_api_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "av_state"
+        ],
+        "summary": "Update an existing room state",
+        "description": "",
+        "operationId": "setState",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "roomID",
+            "in": "path",
+            "description": "ID of room to get state of",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PublicRoom"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "success"
+          },
+          "404": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "av_api_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
+      }
+    },
+    "/av_rooms/av_config/{roomID}": {
+      "get": {
+        "tags": [
+          "av_config"
+        ],
+        "summary": "Get a room configuration",
+        "description": "",
+        "operationId": "getConfig",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "roomID",
+            "in": "path",
+            "description": "ID of room to get configuration of",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "success"
+          },
+          "404": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "av_api_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "securityDefinitions": {
+    "av_api_auth": {
+      "type": "oauth2",
+      "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+      "flow": "implicit",
+      "scopes": {
+        "write:pets": "modify pets in your account",
+        "read:pets": "read your pets"
+      }
+    },
+    "api_key": {
+      "type": "apiKey",
+      "name": "api_key",
+      "in": "header"
+    }
+  },
+  "definitions": {
+    "AudioDevice": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "power": {
+          "type": "string"
+        },
+        "input": {
+          "type": "string"
+        },
+        "muted": {
+          "type": "boolean"
+        },
+        "volume": {
+          "type": "integer"
+        }
+      }
+    },
+    "Display": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "power": {
+          "type": "string"
+        },
+        "input": {
+          "type": "string"
+        },
+        "blanked": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PublicRoom": {
+      "type": "object",
+      "properties": {
+        "building": {
+          "type": "string"
+        },
+        "room": {
+          "type": "string"
+        },
+        "currentVideoInput": {
+          "type": "string"
+        },
+        "currentAudioInput": {
+          "type": "string"
+        },
+        "power": {
+          "type": "string",
+          "enum": [
+            "on",
+            "standby"
+          ]
+        },
+        "blanked": {
+          "type": "boolean"
+        },
+        "muted": {
+          "type": "boolean"
+        },
+        "volume": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "displays": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Display"
+          }
+        },
+        "audioDevices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AudioDevice"
+          }
+        }
+      }
+    }
+  }
+}
