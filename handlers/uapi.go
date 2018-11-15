@@ -78,16 +78,16 @@ func GetState(context echo.Context) error {
 	roomID := context.Param("roomID")
 
 	// check the JWT token
-	// ok, err := helpers.AuthenticatedByJWT(context, "read-state")
-	// if err != nil {
-	// 	log.L.Error(color.HiRedString("Brwaap! Error authenticating! : %s", err.Error()))
-	// 	return context.JSON(http.StatusInternalServerError, "There was a problem")
-	// }
+	ok, err := helpers.AuthenticatedByJWT(context, "read-state")
+	if err != nil {
+		log.L.Error(color.HiRedString("Brwaap! Error authenticating! : %s", err.Error()))
+		return context.JSON(http.StatusInternalServerError, "There was a problem")
+	}
 
-	// if !ok {
-	// 	log.L.Error(color.HiRedString("Brwaap! The scalawag did not meet authentication checks!"))
-	// 	return context.JSON(http.StatusForbidden, "Unauthorized")
-	// }
+	if !ok {
+		log.L.Error(color.HiRedString("Brwaap! The scalawag did not meet authentication checks!"))
+		return context.JSON(http.StatusForbidden, "Unauthorized")
+	}
 
 	log.L.Debugf("Brwaap! Getting state for %s!", roomID)
 
