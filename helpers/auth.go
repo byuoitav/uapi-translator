@@ -9,12 +9,23 @@ import (
 	"github.com/labstack/echo"
 )
 
+// fieldSetRoles is a mapping of field sets to their required roles
+var fieldSetRoles = map[string]string{
+	Basic:    "none",
+	SetState: "write-state",
+	GetState: "read-state",
+	Config:   "read-config",
+}
+
 // AuthenticatedByJWT scans the JWT token and processes to see if the user is granted access to the resource.
-func AuthenticatedByJWT(context echo.Context, role string) (bool, error) {
-	roomID := context.Param("room")
+func AuthenticatedByJWT(context echo.Context, fieldSet string) (bool, error) {
+	roomID := context.Param("roomID")
+
+	role := getFieldSetRole(fieldSet, context.Request().Method)
 
 	log.L.Debug("Arg matey, what's yer JWT like?")
 	token := context.Request().Header.Get("X-jwt-assertion")
+	log.L.Debug(token)
 
 	if len(token) > 0 { // Proceed if we found a token
 		// build a base.Request object with the information
@@ -41,7 +52,14 @@ func AuthenticatedByJWT(context echo.Context, role string) (bool, error) {
 
 		// send it to the EAC
 		var resp base.Response
-		jsonhttp.ExecuteRequest(req, &resp, 60)
+		err = jsonhttp.ExecuteRequest(req, &resp, 60)
+		if err != nil {
+			log.L.Errorf("something went wrong - %s", err.Error())
+		}
+
+		if role == fieldSetRoles[Basic] {
+			return true, nil
+		}
 
 		// read the response to see if the token is valid
 		if resp.Permissions == nil {
@@ -59,4 +77,18 @@ func AuthenticatedByJWT(context echo.Context, role string) (bool, error) {
 
 	log.L.Debug("Stowaway! The Cap'n'll be hear'n about this!")
 	return false, nil
+}
+
+func getFieldSetRole(fs string, method string) string {
+	switch fs {
+	case State:
+		if method == "GET" {
+			return fieldSetRoles[GetState]
+		}
+
+		return fieldSetRoles[SetState]
+
+	default:
+		return fieldSetRoles[fs]
+	}
 }

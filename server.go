@@ -20,12 +20,15 @@ func main() {
 	router.PUT("/log-level/:level", log.SetLogLevel)
 	router.GET("/log-level", log.GetLogLevel)
 
+	// Basic Endpoint
+	router.GET("/:roomID", handlers.GetBasic)
+
 	// State Endpoints
-	router.GET("/av_rooms/av_state/:roomID", handlers.GetState)
-	router.PUT("/av_rooms/av_state/:roomID", handlers.SetState)
+	router.GET("/:roomID/av_state", handlers.State)
+	router.PUT("/:roomID/av_state", handlers.State)
 
 	// Config Endpoints
-	router.GET("/av_rooms/av_config/:roomID", handlers.GetConfig)
+	router.GET("/:roomID/av_config", handlers.GetConfig)
 
 	server := http.Server{
 		Addr:           port,

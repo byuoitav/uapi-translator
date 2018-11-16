@@ -29,6 +29,9 @@ const (
 	Related      = "related"
 )
 
+// Forbidden is a response code
+var Forbidden = 403
+
 // NotFound is a response code
 var NotFound = 404
 
@@ -133,21 +136,13 @@ func generateStateSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 	// TODO: have something to handle failure cases
 
 	// set the metadata first, because if the values are not correct then we should return only the metadata
-	// if len(pubRoom.Building) == 0 || len(pubRoom.Room) == 0 {
-	// 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
-	// 		Code:    &NotFound,
-	// 		Message: "resource not found, invalid room information",
-	// 	}
-	// 	return sub
-	// }
-
-	// if len(pubRoom.Displays) == 0 || len(pubRoom.AudioDevices) == 0 {
-	// 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
-	// 		Code:    &NotFound,
-	// 		Message: "unable to get state of the room",
-	// 	}
-	// 	return sub
-	// }
+	if pubRoom.Building == Unauthorized {
+		sub.Metadata.ValidationResponse = structs.ValidationResponse{
+			Code:    &Forbidden,
+			Message: "Unauthorized",
+		}
+		return sub
+	}
 
 	// create the metadata for the subresource
 	sub.Metadata.ValidationResponse = structs.ValidationResponse{
@@ -335,6 +330,16 @@ func generateStateSubResource(roomID string, pubRoom base.PublicRoom) (sub struc
 
 func generateConfigSubResource(roomID string, pubRoom structs.ReachableRoomConfig) (sub structs.SubResource) {
 	// TODO: have something to handle failure cases
+
+	// set the metadata first, because if the values are not correct then we should return only the metadata
+	if pubRoom.ID == Unauthorized {
+		sub.Metadata.ValidationResponse = structs.ValidationResponse{
+			Code:    &Forbidden,
+			Message: "Unauthorized",
+		}
+		return sub
+	}
+
 	// create links for the subresource
 	var con structs.Link
 

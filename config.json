@@ -1,0 +1,15 @@
+{
+    "env-vars": [
+        "BYPASS_AUTH",
+        "DB_ADDRESS",
+        "DB_PASSWORD",
+        "DB_USERNAME",
+        "ENDPOINT_ACCESS_KEY",
+        "ENDPOINT_AUTHORIZATION_URL",
+        "ENDPOINT_USERNAME",
+        "ROOM_SYSTEM",
+        "SYSTEM_ID"
+    ],
+    "port": ":9101",
+    "name": "uapi-translator"
+}
