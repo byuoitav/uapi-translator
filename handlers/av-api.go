@@ -175,6 +175,7 @@ func executeAPIRequest(endpoint string, roomID string, toReturn interface{}, req
 
 	}
 
+	//The authentication added here is not accepted by the do.
 	auth.AddAuthToRequest(req)
 
 	log.L.Debugf("GoGo is sending a request to %s!", url)
@@ -192,7 +193,10 @@ func executeAPIRequest(endpoint string, roomID string, toReturn interface{}, req
 	}
 
 	defer resp.Body.Close()
-
+	if resp.StatusCode/100 != 2 {
+		log.L.Warnf("Status Code Error: %v - %s", resp.StatusCode, b)
+		return nerr.Translate(err).Add("Couldn't make request to AV-API")
+	}
 	// unmarshal the response
 	err = json.Unmarshal(b, &toReturn)
 	if err != nil {

@@ -1,5 +1,6 @@
 {
     "env-vars": [
+        "AV_API_ADDRESS",
         "BYPASS_AUTH",
         "DB_ADDRESS",
         "DB_PASSWORD",
