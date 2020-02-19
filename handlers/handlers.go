@@ -13,6 +13,9 @@ import (
 func GetRooms(c echo.Context) error {
 	//Check auth?
 
+	roomNum := c.QueryParam("room_number")
+	bldgAbbr := c.QueryParam("building_abbreviation")
+
 	var rooms []structs.Room
 	return c.JSON(http.StatusOK, rooms)
 }
@@ -34,6 +37,11 @@ func GetRoomDevices(c echo.Context) error {
 //Devices
 
 func GetDevices(c echo.Context) error {
+
+	roomNum := c.QueryParam("room_number")
+	bldgAbbr := c.QueryParam("building_abbreviation")
+	deviceType := c.QueryParam("av_device_type")
+
 	var devices []structs.Device
 	return c.JSON(http.StatusOK, devices)
 }
@@ -62,6 +70,10 @@ func GetDeviceState(c echo.Context) error {
 //Inputs
 
 func GetInputs(c echo.Context) error {
+
+	roomNum := c.QueryParam("room_number")
+	bldgAbbr := c.QueryParam("building_abbreviation")
+
 	var inputs []structs.Input
 	return c.JSON(http.StatusOK, inputs)
 }
@@ -76,6 +88,10 @@ func GetInputByID(c echo.Context) error {
 //Displays
 
 func GetDisplays(c echo.Context) error {
+
+	roomNum := c.QueryParam("room_number")
+	bldgAbbr := c.QueryParam("building_abbreviation")
+
 	var displays []structs.Display
 	return c.JSON(http.StatusOK, displays)
 }
@@ -104,6 +120,11 @@ func GetDisplayState(c echo.Context) error {
 //Audio Outputs
 
 func GetAudioOutputs(c echo.Context) error {
+
+	roomNum := c.QueryParam("room_number")
+	bldgAbbr := c.QueryParam("building_abbreviation")
+	deviceType := c.QueryParam("av_device_type")
+
 	var outputs []structs.AudioOutput
 	return c.JSON(http.StatusOK, outputs)
 }
