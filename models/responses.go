@@ -1,4 +1,4 @@
-package structs
+package models
 
 //Rooms
 type Room struct {

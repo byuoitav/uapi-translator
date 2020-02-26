@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/byuoitav/uapi-translator/structs"
+	"github.com/byuoitav/uapi-translator/models"
 
 	"github.com/labstack/echo"
 )
@@ -16,21 +16,21 @@ func GetRooms(c echo.Context) error {
 	roomNum := c.QueryParam("room_number")
 	bldgAbbr := c.QueryParam("building_abbreviation")
 
-	var rooms []structs.Room
+	var rooms []models.Room
 	return c.JSON(http.StatusOK, rooms)
 }
 
 func GetRoomByID(c echo.Context) error {
 	roomId := c.Param("room_id")
 
-	var room structs.Room
+	var room models.Room
 	return c.JSON(http.StatusOK, room)
 }
 
 func GetRoomDevices(c echo.Context) error {
 	roomId := c.Param("room_id")
 
-	var devices structs.RoomDevices
+	var devices models.RoomDevices
 	return c.JSON(http.StatusOK, devices)
 }
 
@@ -42,28 +42,28 @@ func GetDevices(c echo.Context) error {
 	bldgAbbr := c.QueryParam("building_abbreviation")
 	deviceType := c.QueryParam("av_device_type")
 
-	var devices []structs.Device
+	var devices []models.Device
 	return c.JSON(http.StatusOK, devices)
 }
 
 func GetDeviceByID(c echo.Context) error {
 	deviceId := c.Param("av_device_id")
 
-	var device structs.Device
+	var device models.Device
 	return c.JSON(http.StatusOK, device)
 }
 
 func GetDeviceProperties(c echo.Context) error {
 	deviceId := c.Param("av_device_id")
 
-	var deviceProperties []structs.DeviceProperty
+	var deviceProperties []models.DeviceProperty
 	return c.JSON(http.StatusOK, deviceProperties)
 }
 
 func GetDeviceState(c echo.Context) error {
 	deviceId := c.Param("av_device_id")
 
-	var deviceStateAttrs []structs.DeviceStateAttribute
+	var deviceStateAttrs []models.DeviceStateAttribute
 	return c.JSON(http.StatusOK, deviceStateAttrs)
 }
 
@@ -74,14 +74,14 @@ func GetInputs(c echo.Context) error {
 	roomNum := c.QueryParam("room_number")
 	bldgAbbr := c.QueryParam("building_abbreviation")
 
-	var inputs []structs.Input
+	var inputs []models.Input
 	return c.JSON(http.StatusOK, inputs)
 }
 
 func GetInputByID(c echo.Context) error {
 	deviceId := c.Param("av_device_id")
 
-	var input structs.Input
+	var input models.Input
 	return c.JSON(http.StatusOK, input)
 }
 
@@ -92,28 +92,28 @@ func GetDisplays(c echo.Context) error {
 	roomNum := c.QueryParam("room_number")
 	bldgAbbr := c.QueryParam("building_abbreviation")
 
-	var displays []structs.Display
+	var displays []models.Display
 	return c.JSON(http.StatusOK, displays)
 }
 
 func GetDisplayByID(c echo.Context) error {
 	displayId := c.Param("av_display_id")
 
-	var display structs.Display
+	var display models.Display
 	return c.JSON(http.StatusOK, display)
 }
 
 func GetDisplayConfig(c echo.Context) error {
 	displayId := c.Param("av_display_id")
 
-	var displayConfig structs.DisplayConfig
+	var displayConfig models.DisplayConfig
 	return c.JSON(http.StatusOK, displayConfig)
 }
 
 func GetDisplayState(c echo.Context) error {
 	displayId := c.Param("av_display_id")
 
-	var displayState structs.DisplayState
+	var displayState models.DisplayState
 	return c.JSON(http.StatusOK, displayState)
 }
 
@@ -125,20 +125,20 @@ func GetAudioOutputs(c echo.Context) error {
 	bldgAbbr := c.QueryParam("building_abbreviation")
 	deviceType := c.QueryParam("av_device_type")
 
-	var outputs []structs.AudioOutput
+	var outputs []models.AudioOutput
 	return c.JSON(http.StatusOK, outputs)
 }
 
 func GetAudioOutputByID(c echo.Context) error {
 	outputId := c.Param("av_audio_output_id")
 
-	var output structs.AudioOutput
+	var output models.AudioOutput
 	return c.JSON(http.StatusOK, output)
 }
 
 func GetAudioOutputState(c echo.Context) error {
 	outputId := c.Param("av_audio_output_id")
 
-	var outputState structs.AudioOutputState
+	var outputState models.AudioOutputState
 	return c.JSON(http.StatusOK, outputState)
 }
