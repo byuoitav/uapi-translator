@@ -25,3 +25,14 @@ type RoomDB struct {
 	Rev string `json:"_rev,omitempty"`
 	*structs.Room
 }
+
+type DeviceResponse struct {
+	Docs     []DeviceDB `json:"docs"`
+	Bookmark string     `json:"bookmark"`
+	Warning  string     `json:"warning"`
+}
+
+type DeviceDB struct {
+	Rev string `json:"_rev,omitempty"`
+	*structs.Device
+}

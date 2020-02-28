@@ -1,10 +1,11 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
-	"github.com/byuoitav/common/structs"
 	"github.com/byuoitav/uapi-translator/couch"
 	"github.com/byuoitav/uapi-translator/models"
 )
@@ -48,9 +49,9 @@ func GetRooms(roomNum, bldAbbr string) ([]models.Room, error) {
 	for _, rm := range dbRooms {
 		s := strings.Split(rm.ID, "-")
 		next := &models.Room{
-			roomID: rm.ID,
-			roomNum: s[1],
-			bldAbbr: s[0]
+			roomID:   rm.ID,
+			roomNum:  s[1],
+			bldgAbbr: s[0],
 		}
 		rooms = append(rooms, next)
 	}
@@ -62,7 +63,15 @@ func GetRoomByID(roomID string) (models.Room, error) {
 	if err != nil {
 		return nil, err
 	}
-	return rooms[0], nil
+
+	//Translate to models.Room
+	s := strings.Split(roomID, "-")
+	room := &models.Room{
+		roomID:   roomID,
+		roomNum:  s[1],
+		bldgAbbr: s[0],
+	}
+	return room, nil
 }
 
 func GetRoomDevices(roomID string) ([]models.RoomDevices, error) {
@@ -72,16 +81,16 @@ func GetRoomDevices(roomID string) ([]models.RoomDevices, error) {
 	}
 
 	//Get devices????
-	
+
 	var devices []models.Device
 	for _, d := range rooms[0].Devices {
 		s := strings.Split(rooms[0].ID, "-")
-		next := &models.Device {
-			deviceID: d.ID,
+		next := &models.Device{
+			deviceID:   d.ID,
 			deviceName: d.Name,
 			deviceType: d.Type.ID,
-			bldgAbbr: s[0],
-			roomNum: s[1],
+			bldgAbbr:   s[0],
+			roomNum:    s[1],
 		}
 	}
 	return devices, nil
@@ -91,11 +100,11 @@ func requestRoomByID(roomID string) ([]models.RoomDB, error) {
 	url := fmt.Sprintf("%s/rooms/%s", os.Getenv("DB_ADDRESS"), roomID)
 
 	var resp models.RoomDB
-	err = couch.MakeRequest(method, url, "application/json", body, &resp)
+	err := couch.MakeRequest("GET", url, "", nil, &resp)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var rooms []models.RoomDB
 	return append(rooms, resp), nil
 }
@@ -133,7 +142,7 @@ func requestAllRooms() ([]models.RoomDB, error) {
 	// Post, url/room/_find, application/json, IDPrefixQuery??? - query limit: 30?
 	var query models.PrefixQuery
 	query.Selector.ID.GT = "\x00"
-	query.Limit = 30
+	query.Limit = 30 //Todo: get a definite answer on the limit
 
 	url := fmt.Sprintf("%s/rooms/_find", os.Getenv("DB_ADDRESS"))
 
@@ -153,11 +162,11 @@ func requestRoomSearch(url, method string, query models.PrefixQuery) ([]models.R
 		}
 	}
 	// call makeRequest
-	var resp []models.RoomResponse
-	err = couch.MakeRequest(method, url, "application/json", body, &resp)
+	var resp models.RoomResponse
+	err := couch.MakeRequest(method, url, "application/json", body, &resp)
 	if err != nil {
 		return nil, err
 	}
-	// translate response body
+
 	return resp.Docs, nil
 }
