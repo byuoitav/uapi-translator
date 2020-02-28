@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/byuoitav/uapi-translator/models"
+	"github.com/byuoitav/uapi-translator/services"
 
 	"github.com/labstack/echo"
 )
@@ -16,14 +17,22 @@ func GetRooms(c echo.Context) error {
 	roomNum := c.QueryParam("room_number")
 	bldgAbbr := c.QueryParam("building_abbreviation")
 
-	var rooms []models.Room
+	rooms, err := services.GetRooms(roomNum, bldgAbbr)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
 	return c.JSON(http.StatusOK, rooms)
 }
 
 func GetRoomByID(c echo.Context) error {
 	roomId := c.Param("room_id")
 
-	var room models.Room
+	room, err := services.GetRoomByID(roomId)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
 	return c.JSON(http.StatusOK, room)
 }
 
