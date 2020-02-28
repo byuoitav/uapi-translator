@@ -13,10 +13,11 @@ import (
 func GetRooms(roomNum, bldAbbr string) ([]models.Room, error) {
 
 	var dbRooms []models.RoomDB
+	var err error
 
 	if roomNum != "" && bldAbbr != "" {
 		//Both
-		dbRooms, err := requestRoomByID(fmt.Sprintf("%s-%s", bldAbbr, roomNum))
+		dbRooms, err = requestRoomByID(fmt.Sprintf("%s-%s", bldAbbr, roomNum))
 		if err != nil {
 			//Error getting room from database
 			return nil, err
@@ -24,20 +25,20 @@ func GetRooms(roomNum, bldAbbr string) ([]models.Room, error) {
 
 	} else if roomNum != "" {
 		//Just roomNum
-		dbRooms, err := requestRoomByNumber(roomNum)
+		dbRooms, err = requestRoomByNumber(roomNum)
 		if err != nil {
 			return nil, err
 		}
 	} else if bldAbbr != "" {
 		//Just bldAbbr - get rooms by building
-		dbRooms, err := requestRoomByBuilding(bldAbbr)
+		dbRooms, err = requestRoomByBuilding(bldAbbr)
 		if err != nil {
 			//Error getting rooms by building from database
 			return nil, err
 		}
 	} else {
 		//None - get all rooms
-		dbRooms, err := requestAllRooms()
+		dbRooms, err = requestAllRooms()
 		if err != nil {
 			//Error getting all rooms from database
 			return nil, err
@@ -48,28 +49,30 @@ func GetRooms(roomNum, bldAbbr string) ([]models.Room, error) {
 	var rooms []models.Room
 	for _, rm := range dbRooms {
 		s := strings.Split(rm.ID, "-")
-		next := &models.Room{
-			roomID:   rm.ID,
-			roomNum:  s[1],
-			bldgAbbr: s[0],
+		next := models.Room{
+			RoomID:   rm.ID,
+			RoomNum:  s[1],
+			BldgAbbr: s[0],
 		}
 		rooms = append(rooms, next)
 	}
 	return rooms, nil
 }
 
-func GetRoomByID(roomID string) (models.Room, error) {
+func GetRoomByID(roomID string) (*models.Room, error) {
 	rooms, err := requestRoomByID(roomID)
 	if err != nil {
 		return nil, err
+	} else if rooms == nil {
+		return nil, nil //Return error stating no rooms found?
 	}
 
 	//Translate to models.Room
 	s := strings.Split(roomID, "-")
 	room := &models.Room{
-		roomID:   roomID,
-		roomNum:  s[1],
-		bldgAbbr: s[0],
+		RoomID:   roomID,
+		RoomNum:  s[1],
+		BldgAbbr: s[0],
 	}
 	return room, nil
 }
@@ -78,21 +81,23 @@ func GetRoomDevices(roomID string) ([]models.RoomDevices, error) {
 	rooms, err := requestRoomByID(roomID)
 	if err != nil {
 		return nil, err
+	} else if rooms == nil {
+		return nil, nil //Return error stating no rooms found?
 	}
 
 	//Get devices????
 
-	var devices []models.Device
-	for _, d := range rooms[0].Devices {
-		s := strings.Split(rooms[0].ID, "-")
-		next := &models.Device{
-			deviceID:   d.ID,
-			deviceName: d.Name,
-			deviceType: d.Type.ID,
-			bldgAbbr:   s[0],
-			roomNum:    s[1],
-		}
-	}
+	var devices []models.RoomDevices
+	// for _, d := range rooms[0].Devices {
+	// 	s := strings.Split(rooms[0].ID, "-")
+	// 	next := &models.Device{
+	// 		deviceID:   d.ID,
+	// 		deviceName: d.Name,
+	// 		deviceType: d.Type.ID,
+	// 		bldgAbbr:   s[0],
+	// 		roomNum:    s[1],
+	// 	}
+	// }
 	return devices, nil
 }
 
@@ -116,7 +121,7 @@ func requestRoomByNumber(roomNum string) ([]models.RoomDB, error) {
 
 	url := fmt.Sprintf("%s/rooms/_find", os.Getenv("DB_ADDRESS"))
 
-	rooms, err := requestRoomSearch(url, "POST", query)
+	rooms, err := requestRoomSearch(url, "POST", &query)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +135,7 @@ func requestRoomByBuilding(bldAbbr string) ([]models.RoomDB, error) {
 
 	url := fmt.Sprintf("%s/rooms/_find", os.Getenv("DB_ADDRESS"))
 
-	rooms, err := requestRoomSearch(url, "POST", query)
+	rooms, err := requestRoomSearch(url, "POST", &query)
 	if err != nil {
 		return nil, err
 	}
@@ -146,24 +151,25 @@ func requestAllRooms() ([]models.RoomDB, error) {
 
 	url := fmt.Sprintf("%s/rooms/_find", os.Getenv("DB_ADDRESS"))
 
-	rooms, err := requestRoomSearch(url, "POST", query)
+	rooms, err := requestRoomSearch(url, "POST", &query)
 	if err != nil {
 		return nil, err
 	}
 	return rooms, nil
 }
 
-func requestRoomSearch(url, method string, query models.PrefixQuery) ([]models.RoomDB, error) {
+func requestRoomSearch(url, method string, query *models.PrefixQuery) ([]models.RoomDB, error) {
 	var body []byte
+	var err error
 	if query != nil {
-		body, err := json.Marshal(query)
+		body, err = json.Marshal(query)
 		if err != nil {
 			return nil, err
 		}
 	}
 	// call makeRequest
 	var resp models.RoomResponse
-	err := couch.MakeRequest(method, url, "application/json", body, &resp)
+	err = couch.MakeRequest(method, url, "application/json", body, &resp)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package couch
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,7 +10,7 @@ import (
 )
 
 func MakeRequest(method, url, contentType string, body []byte, responseBody interface{}) error {
-	req, err := http.NewRequest(method, url, body)
+	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -31,7 +32,7 @@ func MakeRequest(method, url, contentType string, body []byte, responseBody inte
 	}
 
 	if resp.StatusCode/100 != 2 {
-		return nil, fmt.Errorf("bad response code - %v: %s", resp.StatusCode, b)
+		return fmt.Errorf("bad response code - %v: %s", resp.StatusCode, b)
 	}
 
 	if responseBody != nil {

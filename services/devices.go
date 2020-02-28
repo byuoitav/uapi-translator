@@ -13,39 +13,42 @@ import (
 func GetDevices(roomNum, bldgAbbr, devType string) ([]models.Device, error) {
 
 	var dbDevices []models.DeviceDB
+	var err error
 
 	if roomNum != "" && bldgAbbr != "" {
 		roomID := fmt.Sprintf("%s-%s", bldgAbbr, roomNum)
-		dbDevices, err := requestDeviceByRoom(roomID, devType)
+		dbDevices, err = requestDeviceByRoom(roomID, devType)
 		if err != nil {
 			return nil, err
 		}
 	} else if roomNum != "" {
-		dbDevices, err := requestDeviceByRoomNum(roomNum, devType)
+		dbDevices, err = requestDeviceByRoomNum(roomNum, devType)
 		if err != nil {
 			return nil, err
 		}
 	} else if bldgAbbr != "" {
-		dbDevices, err := requestDeviceByBuilding(bldgAbbr, devType)
+		dbDevices, err = requestDeviceByBuilding(bldgAbbr, devType)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		dbDevices, err := requestAllDevices(devType)
+		dbDevices, err = requestAllDevices(devType)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	var devices []models.Device
-	for _, dev := range dbDevices {
-		next := &models.Device{}
-		devices = append(devices, next)
+	if dbDevices == nil {
 	}
+	// for _, dev := range dbDevices {
+	// 	var next models.Device
+	// 	devices = append(devices, next)
+	// }
 	return devices, nil
 }
 
-func GetDeviceByID(deviceID string) (models.Device, error) {
+func GetDeviceByID(deviceID string) (*models.Device, error) {
 	devices, err := requestDeviceByID(deviceID)
 	if err != nil {
 		return nil, err
@@ -53,11 +56,11 @@ func GetDeviceByID(deviceID string) (models.Device, error) {
 
 	s := strings.Split(deviceID, "-")
 	device := &models.Device{
-		deviceID:   devices[0].ID,
-		deviceName: devices[0].Name,
-		deviceType: devices[0].Type.ID,
-		bldgAbbr:   s[0],
-		roomNum:    s[1],
+		DeviceID:   devices[0].ID,
+		DeviceName: devices[0].Name,
+		DeviceType: devices[0].Type.ID,
+		BldgAbbr:   s[0],
+		RoomNum:    s[1],
 	}
 	return device, nil
 }
@@ -76,21 +79,21 @@ func requestDeviceByID(deviceID string) ([]models.DeviceDB, error) {
 }
 
 func requestDeviceByRoom(roomID, deviceType string) ([]models.DeviceDB, error) {
-
+	return nil, nil
 }
 
 func requestDeviceByRoomNum(roomNum, deviceType string) ([]models.DeviceDB, error) {
-
+	return nil, nil
 }
 
 func requestDeviceByBuilding(bldgAbbr, deviceType string) ([]models.DeviceDB, error) {
-
+	return nil, nil
 }
 
 func requestAllDevices(deviceType string) ([]models.DeviceDB, error) {
 	var query models.PrefixQuery
 	query.Limit = 30 //Todo: get a definite answer on the limit
-	if deviceType == nil {
+	if deviceType == "" {
 		query.Selector.ID.GT = "\x00"
 	} else {
 
@@ -98,24 +101,25 @@ func requestAllDevices(deviceType string) ([]models.DeviceDB, error) {
 
 	url := fmt.Sprintf("%s/devices/_find", os.Getenv("DB_ADDRESS"))
 
-	devices, err := requestDeviceSearch(url, "POST", query)
+	devices, err := requestDeviceSearch(url, "POST", &query)
 	if err != nil {
 		return nil, err
 	}
 	return devices, nil
 }
 
-func requestDeviceSearch(url, method string, query models.PrefixQuery) ([]models.DeviceDB, error) {
+func requestDeviceSearch(url, method string, query *models.PrefixQuery) ([]models.DeviceDB, error) {
 	var body []byte
+	var err error
 	if query != nil {
-		body, err := json.Marshal(query)
+		body, err = json.Marshal(query)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	var resp models.DeviceResponse
-	err := couch.MakeRequest(method, url, "application/json", body, &resp)
+	err = couch.MakeRequest(method, url, "application/json", body, &resp)
 	if err != nil {
 		return nil, err
 	}

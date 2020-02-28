@@ -2,72 +2,72 @@ package models
 
 //Rooms
 type Room struct {
-	roomID   string `json:"av_room_id"`
-	roomNum  string `json:"room_number"`
-	bldgAbbr string `json:"building_abbreviation"`
+	RoomID   string `json:"av_room_id"`
+	RoomNum  string `json:"room_number"`
+	BldgAbbr string `json:"building_abbreviation"`
 }
 
 type RoomDevices struct {
-	displays []Display     `json:"av_displays"`
-	outputs  []AudioOutput `json:"av_audio_outputs"`
-	inputs   []Input       `json:"av_inputs"`
+	Displays []Display     `json:"av_displays"`
+	Outputs  []AudioOutput `json:"av_audio_outputs"`
+	Inputs   []Input       `json:"av_inputs"`
 }
 
 //Devices
 type Device struct {
-	deviceID   string `json:"av_device_id"`
-	deviceName string `json:"av_device_name"`
-	deviceType string `json:"av_device_type"`
-	bldgAbbr   string `json:"building_abbreviation"`
-	roomNum    string `json:"room_number"`
+	DeviceID   string `json:"av_device_id"`
+	DeviceName string `json:"av_device_name"`
+	DeviceType string `json:"av_device_type"`
+	BldgAbbr   string `json:"building_abbreviation"`
+	RoomNum    string `json:"room_number"`
 }
 
 type DeviceProperty struct {
-	name  string `json:"av_device_property_name"`
-	value string `json:"av_device_property_value"`
+	Name  string `json:"av_device_property_name"`
+	Value string `json:"av_device_property_value"`
 }
 
 type DeviceStateAttribute struct {
-	name  string `json:"av_device_state_attribute_name"`
-	value string `json:"av_device_state_attribute_value"`
+	Name  string `json:"av_device_state_attribute_name"`
+	Value string `json:"av_device_state_attribute_value"`
 }
 
 //Inputs
 type Input struct {
-	deviceID   string   `json:"av_device_id"`
-	roomNum    string   `json:"room_number"`
-	bldgAbbr   string   `json:"building_abbreviation"`
-	deviceType string   `json:"av_device_type"`
-	outputs    []string `json:"av_outputs"`
+	DeviceID   string   `json:"av_device_id"`
+	RoomNum    string   `json:"room_number"`
+	BldgAbbr   string   `json:"building_abbreviation"`
+	DeviceType string   `json:"av_device_type"`
+	Outputs    []string `json:"av_outputs"`
 }
 
 //Displays
 type Display struct {
-	displayID string `json:"av_display_id"`
-	roomNum   string `json:"room_number"`
-	bldgAbbr  string `json:"building_abbreviation"`
+	DisplayID string `json:"av_display_id"`
+	RoomNum   string `json:"room_number"`
+	BldgAbbr  string `json:"building_abbreviation"`
 }
 
 type DisplayConfig struct {
-	devices []Device `json:"av_devices"`
-	inputs  []Input  `json:"av_inputs"`
+	Devices []Device `json:"av_devices"`
+	Inputs  []Input  `json:"av_inputs"`
 }
 
 type DisplayState struct {
-	powered bool   `json:"av_display_powered"`
-	blanked bool   `json:"av_display_blanked"`
-	input   string `json:"av_display_input"`
+	Powered bool   `json:"av_display_powered"`
+	Blanked bool   `json:"av_display_blanked"`
+	Input   string `json:"av_display_input"`
 }
 
 //Audio Outputs
 type AudioOutput struct {
-	outputID   string `json:"av_audio_output_id"`
-	roomNum    string `json:"room_number"`
-	bldgAbbr   string `json:"building_abbreviation"`
-	deviceType string `json:"av_device_type"`
+	OutputID   string `json:"av_audio_output_id"`
+	RoomNum    string `json:"room_number"`
+	BldgAbbr   string `json:"building_abbreviation"`
+	DeviceType string `json:"av_device_type"`
 }
 
 type AudioOutputState struct {
-	volume int  `json:"av_audio_output_volume_level"`
-	muted  bool `json:"av_audio_output_muted"`
+	Volume int  `json:"av_audio_output_volume_level"`
+	Muted  bool `json:"av_audio_output_muted"`
 }
