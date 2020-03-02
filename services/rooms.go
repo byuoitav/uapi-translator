@@ -115,7 +115,7 @@ func requestRoomByID(roomID string) ([]models.RoomDB, error) {
 }
 
 func requestRoomByNumber(roomNum string) ([]models.RoomDB, error) {
-	var query models.PrefixQuery
+	var query models.CouchQuery
 	query.Selector.ID.Regex = fmt.Sprintf("-%s$", roomNum)
 	query.Limit = 1000
 
@@ -129,7 +129,7 @@ func requestRoomByNumber(roomNum string) ([]models.RoomDB, error) {
 }
 
 func requestRoomByBuilding(bldAbbr string) ([]models.RoomDB, error) {
-	var query models.PrefixQuery
+	var query models.CouchQuery
 	query.Selector.ID.Regex = bldAbbr
 	query.Limit = 1000
 
@@ -144,7 +144,7 @@ func requestRoomByBuilding(bldAbbr string) ([]models.RoomDB, error) {
 
 //Request all rooms with a limit of 30?
 func requestAllRooms() ([]models.RoomDB, error) {
-	var query models.PrefixQuery
+	var query models.CouchQuery
 	query.Selector.ID.GT = "\x00"
 	query.Limit = 30 //Todo: get a definite answer on the limit
 
@@ -157,7 +157,7 @@ func requestAllRooms() ([]models.RoomDB, error) {
 	return rooms, nil
 }
 
-func requestRoomSearch(url, method string, query *models.PrefixQuery) ([]models.RoomDB, error) {
+func requestRoomSearch(url, method string, query *models.CouchQuery) ([]models.RoomDB, error) {
 	var body []byte
 	var err error
 	if query != nil {

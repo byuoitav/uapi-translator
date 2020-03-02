@@ -2,14 +2,21 @@ package models
 
 import "github.com/byuoitav/common/structs"
 
+type CouchSearch struct {
+	GT    string `json:"$gt,omitempty"`
+	LT    string `json:"$lt,omitempty"`
+	Regex string `json:"$regex,omitempty"`
+}
+
+type DeviceTypeQuery struct {
+	ID *CouchSearch `json:"_id,omitempty"`
+}
+
 // Couch query object
-type PrefixQuery struct {
+type CouchQuery struct {
 	Selector struct {
-		ID struct {
-			GT    string `json:"$gt,omitempty"`
-			LT    string `json:"$lt,omitempty"`
-			Regex string `json:"$regex,omitempty"`
-		} `json:"_id"`
+		ID      CouchSearch      `json:"_id"`
+		DevType *DeviceTypeQuery `json:"type,omitempty"`
 	} `json:"selector"`
 	Limit int `json:"limit"`
 }
