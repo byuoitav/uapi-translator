@@ -11,31 +11,35 @@ import (
 )
 
 func GetDevices(roomNum, bldgAbbr, devType string) ([]models.Device, error) {
+	url := fmt.Sprintf("%s/devices/_find", os.Getenv("DB_ADDRESS"))
+	var query models.CouchQuery
 
-	var dbDevices []models.DeviceDB
-	var err error
+	if devType != "" {
+		query.Selector.DevType = &models.DeviceTypeQuery{
+			ID: &models.CouchSearch{
+				Regex: devType,
+			},
+		}
+	}
 
 	if roomNum != "" && bldgAbbr != "" {
 		roomID := fmt.Sprintf("%s-%s", bldgAbbr, roomNum)
-		dbDevices, err = requestDeviceByRoom(roomID, devType)
-		if err != nil {
-			return nil, err
-		}
+		query.Limit = 1000
+		query.Selector.ID.Regex = fmt.Sprintf("%s-", roomID)
 	} else if roomNum != "" {
-		dbDevices, err = requestDeviceByRoomNum(roomNum, devType)
-		if err != nil {
-			return nil, err
-		}
+		query.Limit = 1000
+		query.Selector.ID.Regex = fmt.Sprintf("%s-", roomNum)
 	} else if bldgAbbr != "" {
-		dbDevices, err = requestDeviceByBuilding(bldgAbbr, devType)
-		if err != nil {
-			return nil, err
-		}
+		query.Limit = 30 //Todo: get a definite answer on the limit
+		query.Selector.ID.Regex = bldgAbbr
 	} else {
-		dbDevices, err = requestAllDevices(devType)
-		if err != nil {
-			return nil, err
-		}
+		query.Limit = 30 //Todo: get a definite answer on the limit
+		query.Selector.ID.GT = "\x00"
+	}
+
+	dbDevices, err := requestDeviceSearch(url, "POST", &query)
+	if err != nil {
+		return nil, err
 	}
 
 	var devices []models.Device
@@ -84,94 +88,6 @@ func requestDeviceByID(deviceID string) ([]models.DeviceDB, error) {
 
 	var devices []models.DeviceDB
 	return append(devices, resp), nil
-}
-
-func requestDeviceByRoom(roomID, deviceType string) ([]models.DeviceDB, error) {
-	url := fmt.Sprintf("%s/devices/_find", os.Getenv("DB_ADDRESS"))
-	var query models.CouchQuery
-
-	if deviceType != "" {
-		query.Selector.DevType = &models.DeviceTypeQuery{
-			ID: &models.CouchSearch{
-				Regex: deviceType,
-			},
-		}
-	}
-	query.Limit = 1000
-	query.Selector.ID.Regex = fmt.Sprintf("%s-", roomID)
-
-	devices, err := requestDeviceSearch(url, "POST", &query)
-	if err != nil {
-		return nil, err
-	}
-
-	return devices, nil
-}
-
-func requestDeviceByRoomNum(roomNum, deviceType string) ([]models.DeviceDB, error) {
-	url := fmt.Sprintf("%s/devices/_find", os.Getenv("DB_ADDRESS"))
-	var query models.CouchQuery
-
-	if deviceType != "" {
-		query.Selector.DevType = &models.DeviceTypeQuery{
-			ID: &models.CouchSearch{
-				Regex: deviceType,
-			},
-		}
-	}
-	query.Limit = 1000
-	query.Selector.ID.Regex = fmt.Sprintf("%s-", roomNum)
-
-	devices, err := requestDeviceSearch(url, "POST", &query)
-	if err != nil {
-		return nil, err
-	}
-
-	return devices, nil
-}
-
-func requestDeviceByBuilding(bldgAbbr, deviceType string) ([]models.DeviceDB, error) {
-	url := fmt.Sprintf("%s/devices/_find", os.Getenv("DB_ADDRESS"))
-	var query models.CouchQuery
-
-	if deviceType != "" {
-		query.Selector.DevType = &models.DeviceTypeQuery{
-			ID: &models.CouchSearch{
-				Regex: deviceType,
-			},
-		}
-	}
-	query.Limit = 30 //Todo: get a definite answer on the limit
-	query.Selector.ID.Regex = bldgAbbr
-
-	devices, err := requestDeviceSearch(url, "POST", &query)
-	if err != nil {
-		return nil, err
-	}
-
-	return devices, nil
-}
-
-func requestAllDevices(deviceType string) ([]models.DeviceDB, error) {
-	url := fmt.Sprintf("%s/devices/_find", os.Getenv("DB_ADDRESS"))
-	var query models.CouchQuery
-
-	if deviceType != "" {
-		query.Selector.DevType = &models.DeviceTypeQuery{
-			ID: &models.CouchSearch{
-				Regex: deviceType,
-			},
-		}
-	}
-	query.Limit = 30 //Todo: get a definite answer on the limit
-	query.Selector.ID.GT = "\x00"
-
-	devices, err := requestDeviceSearch(url, "POST", &query)
-	if err != nil {
-		return nil, err
-	}
-
-	return devices, nil
 }
 
 func requestDeviceSearch(url, method string, query interface{}) ([]models.DeviceDB, error) {
