@@ -64,7 +64,7 @@ func GetRoomByID(roomID string) (*models.Room, error) {
 	if err != nil {
 		return nil, err
 	} else if rooms == nil {
-		return nil, nil //Return error stating no rooms found?
+		return nil, fmt.Errorf("No rooms found under id: %s", roomID)
 	}
 
 	//Translate to models.Room
@@ -144,7 +144,6 @@ func requestRoomByBuilding(bldAbbr string) ([]models.RoomDB, error) {
 
 //Request all rooms with a limit of 30?
 func requestAllRooms() ([]models.RoomDB, error) {
-	// Post, url/room/_find, application/json, IDPrefixQuery??? - query limit: 30?
 	var query models.PrefixQuery
 	query.Selector.ID.GT = "\x00"
 	query.Limit = 30 //Todo: get a definite answer on the limit

@@ -47,18 +47,26 @@ func GetRoomDevices(c echo.Context) error {
 
 func GetDevices(c echo.Context) error {
 
-	// roomNum := c.QueryParam("room_number")
-	// bldgAbbr := c.QueryParam("building_abbreviation")
-	// deviceType := c.QueryParam("av_device_type")
+	roomNum := c.QueryParam("room_number")
+	bldgAbbr := c.QueryParam("building_abbreviation")
+	deviceType := c.QueryParam("av_device_type")
 
-	var devices []models.Device
+	devices, err := services.GetDevices(roomNum, bldgAbbr, deviceType)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
 	return c.JSON(http.StatusOK, devices)
 }
 
 func GetDeviceByID(c echo.Context) error {
-	// deviceId := c.Param("av_device_id")
+	deviceId := c.Param("av_device_id")
 
-	var device models.Device
+	device, err := services.GetDeviceByID(deviceId)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
 	return c.JSON(http.StatusOK, device)
 }
 
