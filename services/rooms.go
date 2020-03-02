@@ -116,7 +116,7 @@ func requestRoomByID(roomID string) ([]models.RoomDB, error) {
 
 func requestRoomByNumber(roomNum string) ([]models.RoomDB, error) {
 	var query models.PrefixQuery
-	//Todo: search for rooms with roomNum, regex?
+	query.Selector.ID.Regex = fmt.Sprintf("-%s$", roomNum)
 	query.Limit = 1000
 
 	url := fmt.Sprintf("%s/rooms/_find", os.Getenv("DB_ADDRESS"))
