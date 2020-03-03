@@ -60,31 +60,21 @@ func GetDevices(roomNum, bldgAbbr, devType string) ([]models.Device, error) {
 }
 
 func GetDeviceByID(deviceID string) (*models.Device, error) {
-	devices, err := requestDeviceByID(deviceID)
+	url := fmt.Sprintf("%s/devices/%s", os.Getenv("DB_ADDRESS"), deviceID)
+	var resp models.DeviceDB
+
+	err := couch.DBSearch(url, "GET", nil, &resp)
 	if err != nil {
 		return nil, err
 	}
 
-	s := strings.Split(devices[0].ID, "-")
+	s := strings.Split(resp.ID, "-")
 	device := &models.Device{
-		DeviceID:   devices[0].ID,
-		DeviceName: devices[0].Name,
-		DeviceType: devices[0].Type.ID,
+		DeviceID:   resp.ID,
+		DeviceName: resp.Name,
+		DeviceType: resp.Type.ID,
 		BldgAbbr:   s[0],
 		RoomNum:    s[1],
 	}
 	return device, nil
-}
-
-func requestDeviceByID(deviceID string) ([]models.DeviceDB, error) {
-	url := fmt.Sprintf("%s/devices/%s", os.Getenv("DB_ADDRESS"), deviceID)
-
-	var resp models.DeviceDB
-	err := couch.MakeRequest("GET", url, "", nil, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	var devices []models.DeviceDB
-	return append(devices, resp), nil
 }

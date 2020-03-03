@@ -49,26 +49,26 @@ func GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
 	return rooms, nil
 }
 
-func GetRoomDevices(roomID string) ([]models.RoomDevices, error) {
-	rooms, err := requestRoomByID(roomID)
-	if err != nil {
-		return nil, err
-	} else if rooms == nil {
-		return nil, nil //Return error stating no rooms found?
-	}
+// func GetRoomDevices(roomID string) ([]models.RoomDevices, error) {
+// 	rooms, err := requestRoomByID(roomID)
+// 	if err != nil {
+// 		return nil, err
+// 	} else if rooms == nil {
+// 		return nil, nil //Return error stating no rooms found?
+// 	}
 
-	//Get devices????
+//	// Get devices????
 
-	var devices []models.RoomDevices
-	// for _, d := range rooms[0].Devices {
-	// 	s := strings.Split(rooms[0].ID, "-")
-	// 	next := &models.Device{
-	// 		deviceID:   d.ID,
-	// 		deviceName: d.Name,
-	// 		deviceType: d.Type.ID,
-	// 		bldgAbbr:   s[0],
-	// 		roomNum:    s[1],
-	// 	}
-	// }
-	return devices, nil
-}
+// 	var devices []models.RoomDevices
+// for _, d := range rooms[0].Devices {
+// 	s := strings.Split(rooms[0].ID, "-")
+// 	next := &models.Device{
+// 		deviceID:   d.ID,
+// 		deviceName: d.Name,
+// 		deviceType: d.Type.ID,
+// 		bldgAbbr:   s[0],
+// 		roomNum:    s[1],
+// 	}
+// }
+// 	return devices, nil
+// }

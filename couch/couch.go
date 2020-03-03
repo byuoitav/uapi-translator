@@ -19,7 +19,7 @@ func DBSearch(url, method string, query, resp interface{}) error {
 		}
 	}
 
-	err = MakeRequest(method, url, "application/json", body, &resp)
+	err = makeRequest(method, url, "application/json", body, &resp)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func DBSearch(url, method string, query, resp interface{}) error {
 	return nil
 }
 
-func MakeRequest(method, url, contentType string, body []byte, responseBody interface{}) error {
+func makeRequest(method, url, contentType string, body []byte, responseBody interface{}) error {
 	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 	if err != nil {
 		return err
