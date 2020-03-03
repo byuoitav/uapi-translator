@@ -49,8 +49,8 @@ type Display struct {
 }
 
 type DisplayConfig struct {
-	Devices []Device `json:"av_devices"`
-	Inputs  []Input  `json:"av_inputs"`
+	Devices []string `json:"av_devices"`
+	Inputs  []string `json:"av_inputs"`
 }
 
 type DisplayState struct {

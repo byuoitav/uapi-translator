@@ -60,22 +60,17 @@ func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 }
 
 func GetDisplayByID(dispID string) (*models.Display, error) {
-	s := strings.Split(dispID, "-")
-	url := fmt.Sprintf("%s/ui-configuration/%s", os.Getenv("DB_ADDRESS"), fmt.Sprintf("%s-%s", s[0], s[1]))
-
-	var resp models.DisplayDB
-	err := couch.DBSearch(url, "GET", nil, &resp)
+	s, index, err := parseDisplayID(dispID)
 	if err != nil {
 		return nil, err
 	}
 
-	if !strings.Contains(s[2], "Display") {
-		return nil, fmt.Errorf("Invalid display id")
-	}
+	url := fmt.Sprintf("%s/ui-configuration/%s", os.Getenv("DB_ADDRESS"), fmt.Sprintf("%s-%s", s[0], s[1]))
 
-	var index int
-	if index, err = strconv.Atoi(strings.Trim(s[2], "Display")); err != nil {
-		return nil, fmt.Errorf("Invalid display id")
+	var resp models.DisplayDB
+	err = couch.DBSearch(url, "GET", nil, &resp)
+	if err != nil {
+		return nil, err
 	}
 
 	if index > len(resp.Presets) {
@@ -88,4 +83,55 @@ func GetDisplayByID(dispID string) (*models.Display, error) {
 		BldgAbbr:  s[0],
 	}
 	return display, nil
+}
+
+func GetDisplayConfig(dispID string) (*models.DisplayConfig, error) {
+	s, index, err := parseDisplayID(dispID)
+	if err != nil {
+		return nil, err
+	}
+
+	url := fmt.Sprintf("%s/ui-configuration/%s", os.Getenv("DB_ADDRESS"), fmt.Sprintf("%s-%s", s[0], s[1]))
+
+	var resp models.DisplayDB
+	err = couch.DBSearch(url, "GET", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	if index > len(resp.Presets) {
+		return nil, fmt.Errorf("Display does not exist")
+	}
+
+	var devices []string
+	for _, dev := range resp.Presets[index-1].Displays {
+		devices = append(devices, fmt.Sprintf("%s-%s-%s", s[0], s[1], dev))
+	}
+
+	var inputs []string
+	for _, in := range resp.Presets[index-1].Inputs {
+		inputs = append(inputs, fmt.Sprintf("%s-%s-%s", s[0], s[1], in))
+	}
+
+	config := &models.DisplayConfig{
+		Devices: devices,
+		Inputs:  inputs,
+	}
+
+	return config, nil
+}
+
+func parseDisplayID(id string) ([]string, int, error) {
+	s := strings.Split(id, "-")
+
+	if !strings.Contains(s[2], "Display") {
+		return nil, 0, fmt.Errorf("Invalid display id")
+	}
+
+	index, err := strconv.Atoi(strings.Trim(s[2], "Display"))
+	if err != nil {
+		return nil, 0, fmt.Errorf("Invalid display id")
+	}
+
+	return s, index, nil
 }
