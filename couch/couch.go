@@ -9,6 +9,24 @@ import (
 	"os"
 )
 
+func DBSearch(url, method string, query, resp interface{}) error {
+	var body []byte
+	var err error
+	if query != nil {
+		body, err = json.Marshal(query)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = MakeRequest(method, url, "application/json", body, &resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func MakeRequest(method, url, contentType string, body []byte, responseBody interface{}) error {
 	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 	if err != nil {

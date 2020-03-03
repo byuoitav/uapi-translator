@@ -1,7 +1,6 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -12,7 +11,7 @@ import (
 
 func GetDevices(roomNum, bldgAbbr, devType string) ([]models.Device, error) {
 	url := fmt.Sprintf("%s/devices/_find", os.Getenv("DB_ADDRESS"))
-	var query models.CouchQuery
+	var query models.DeviceQuery
 
 	if devType != "" {
 		query.Selector.DevType = &models.DeviceTypeQuery{
@@ -23,9 +22,8 @@ func GetDevices(roomNum, bldgAbbr, devType string) ([]models.Device, error) {
 	}
 
 	if roomNum != "" && bldgAbbr != "" {
-		roomID := fmt.Sprintf("%s-%s", bldgAbbr, roomNum)
 		query.Limit = 1000
-		query.Selector.ID.Regex = fmt.Sprintf("%s-", roomID)
+		query.Selector.ID.Regex = fmt.Sprintf("%s-%s-", bldgAbbr, roomNum)
 	} else if roomNum != "" {
 		query.Limit = 1000
 		query.Selector.ID.Regex = fmt.Sprintf("%s-", roomNum)
@@ -37,16 +35,17 @@ func GetDevices(roomNum, bldgAbbr, devType string) ([]models.Device, error) {
 		query.Selector.ID.GT = "\x00"
 	}
 
-	dbDevices, err := requestDeviceSearch(url, "POST", &query)
+	var resp models.DeviceResponse
+	err := couch.DBSearch(url, "POST", &query, &resp)
 	if err != nil {
 		return nil, err
 	}
 
 	var devices []models.Device
-	if dbDevices == nil {
+	if resp.Docs == nil {
 		return nil, fmt.Errorf("No devices")
 	}
-	for _, dev := range dbDevices {
+	for _, dev := range resp.Docs {
 		s := strings.Split(dev.ID, "-")
 		next := models.Device{
 			DeviceID:   dev.ID,
@@ -88,23 +87,4 @@ func requestDeviceByID(deviceID string) ([]models.DeviceDB, error) {
 
 	var devices []models.DeviceDB
 	return append(devices, resp), nil
-}
-
-func requestDeviceSearch(url, method string, query interface{}) ([]models.DeviceDB, error) {
-	var body []byte
-	var err error
-	if query != nil {
-		body, err = json.Marshal(query)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var resp models.DeviceResponse
-	err = couch.MakeRequest(method, url, "application/json", body, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Docs, nil
 }

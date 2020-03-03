@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/byuoitav/uapi-translator/models"
 	"github.com/byuoitav/uapi-translator/services"
@@ -27,8 +28,9 @@ func GetRooms(c echo.Context) error {
 
 func GetRoomByID(c echo.Context) error {
 	roomId := c.Param("room_id")
+	s := strings.Split(roomId, "-")
 
-	room, err := services.GetRoomByID(roomId)
+	room, err := services.GetRooms(s[1], s[0])
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -106,10 +108,14 @@ func GetInputByID(c echo.Context) error {
 
 func GetDisplays(c echo.Context) error {
 
-	// roomNum := c.QueryParam("room_number")
-	// bldgAbbr := c.QueryParam("building_abbreviation")
+	roomNum := c.QueryParam("room_number")
+	bldgAbbr := c.QueryParam("building_abbreviation")
 
-	var displays []models.Display
+	displays, err := services.GetDisplays(roomNum, bldgAbbr)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
 	return c.JSON(http.StatusOK, displays)
 }
 

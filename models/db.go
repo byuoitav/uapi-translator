@@ -8,15 +8,28 @@ type CouchSearch struct {
 	Regex string `json:"$regex,omitempty"`
 }
 
+type RoomQuery struct {
+	Selector struct {
+		ID CouchSearch `json:"_id"`
+	} `json:"selector"`
+	Limit int `json:"limit"`
+}
+
 type DeviceTypeQuery struct {
 	ID *CouchSearch `json:"_id,omitempty"`
 }
 
-// Couch query object
-type CouchQuery struct {
+type DeviceQuery struct {
 	Selector struct {
 		ID      CouchSearch      `json:"_id"`
 		DevType *DeviceTypeQuery `json:"type,omitempty"`
+	} `json:"selector"`
+	Limit int `json:"limit"`
+}
+
+type DisplayQuery struct {
+	Selector struct {
+		ID CouchSearch `json:"_id"`
 	} `json:"selector"`
 	Limit int `json:"limit"`
 }

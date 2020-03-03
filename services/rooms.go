@@ -1,7 +1,6 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -10,44 +9,35 @@ import (
 	"github.com/byuoitav/uapi-translator/models"
 )
 
-func GetRooms(roomNum, bldAbbr string) ([]models.Room, error) {
+func GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
+	url := fmt.Sprintf("%s/rooms/_find", os.Getenv("DB_ADDRESS"))
+	var query models.RoomQuery
 
-	var dbRooms []models.RoomDB
-	var err error
-
-	if roomNum != "" && bldAbbr != "" {
-		//Both
-		dbRooms, err = requestRoomByID(fmt.Sprintf("%s-%s", bldAbbr, roomNum))
-		if err != nil {
-			//Error getting room from database
-			return nil, err
-		}
-
+	if roomNum != "" && bldgAbbr != "" {
+		query.Limit = 1000
+		query.Selector.ID.Regex = fmt.Sprintf("%s-%s$", bldgAbbr, roomNum)
 	} else if roomNum != "" {
-		//Just roomNum
-		dbRooms, err = requestRoomByNumber(roomNum)
-		if err != nil {
-			return nil, err
-		}
-	} else if bldAbbr != "" {
-		//Just bldAbbr - get rooms by building
-		dbRooms, err = requestRoomByBuilding(bldAbbr)
-		if err != nil {
-			//Error getting rooms by building from database
-			return nil, err
-		}
+		query.Limit = 1000
+		query.Selector.ID.Regex = fmt.Sprintf("-%s$", roomNum)
+	} else if bldgAbbr != "" {
+		query.Limit = 30 //Todo: get a definite answer on the limit
+		query.Selector.ID.Regex = bldgAbbr
 	} else {
-		//None - get all rooms
-		dbRooms, err = requestAllRooms()
-		if err != nil {
-			//Error getting all rooms from database
-			return nil, err
-		}
+		query.Limit = 30 //Todo: get a definite answer on the limit
+		query.Selector.ID.GT = "\x00"
 	}
 
-	//Translate to []models.Room from []models.RoomDB
+	var resp models.RoomResponse
+	err := couch.DBSearch(url, "POST", &query, &resp)
+	if err != nil {
+		return nil, err
+	}
+
 	var rooms []models.Room
-	for _, rm := range dbRooms {
+	if resp.Docs == nil {
+		return nil, fmt.Errorf("No rooms")
+	}
+	for _, rm := range resp.Docs {
 		s := strings.Split(rm.ID, "-")
 		next := models.Room{
 			RoomID:   rm.ID,
@@ -57,24 +47,6 @@ func GetRooms(roomNum, bldAbbr string) ([]models.Room, error) {
 		rooms = append(rooms, next)
 	}
 	return rooms, nil
-}
-
-func GetRoomByID(roomID string) (*models.Room, error) {
-	rooms, err := requestRoomByID(roomID)
-	if err != nil {
-		return nil, err
-	} else if rooms == nil {
-		return nil, fmt.Errorf("No rooms found under id: %s", roomID)
-	}
-
-	//Translate to models.Room
-	s := strings.Split(roomID, "-")
-	room := &models.Room{
-		RoomID:   roomID,
-		RoomNum:  s[1],
-		BldgAbbr: s[0],
-	}
-	return room, nil
 }
 
 func GetRoomDevices(roomID string) ([]models.RoomDevices, error) {
@@ -99,79 +71,4 @@ func GetRoomDevices(roomID string) ([]models.RoomDevices, error) {
 	// 	}
 	// }
 	return devices, nil
-}
-
-func requestRoomByID(roomID string) ([]models.RoomDB, error) {
-	url := fmt.Sprintf("%s/rooms/%s", os.Getenv("DB_ADDRESS"), roomID)
-
-	var resp models.RoomDB
-	err := couch.MakeRequest("GET", url, "", nil, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	var rooms []models.RoomDB
-	return append(rooms, resp), nil
-}
-
-func requestRoomByNumber(roomNum string) ([]models.RoomDB, error) {
-	var query models.CouchQuery
-	query.Selector.ID.Regex = fmt.Sprintf("-%s$", roomNum)
-	query.Limit = 1000
-
-	url := fmt.Sprintf("%s/rooms/_find", os.Getenv("DB_ADDRESS"))
-
-	rooms, err := requestRoomSearch(url, "POST", &query)
-	if err != nil {
-		return nil, err
-	}
-	return rooms, nil
-}
-
-func requestRoomByBuilding(bldAbbr string) ([]models.RoomDB, error) {
-	var query models.CouchQuery
-	query.Selector.ID.Regex = bldAbbr
-	query.Limit = 1000
-
-	url := fmt.Sprintf("%s/rooms/_find", os.Getenv("DB_ADDRESS"))
-
-	rooms, err := requestRoomSearch(url, "POST", &query)
-	if err != nil {
-		return nil, err
-	}
-	return rooms, nil
-}
-
-//Request all rooms with a limit of 30?
-func requestAllRooms() ([]models.RoomDB, error) {
-	var query models.CouchQuery
-	query.Selector.ID.GT = "\x00"
-	query.Limit = 30 //Todo: get a definite answer on the limit
-
-	url := fmt.Sprintf("%s/rooms/_find", os.Getenv("DB_ADDRESS"))
-
-	rooms, err := requestRoomSearch(url, "POST", &query)
-	if err != nil {
-		return nil, err
-	}
-	return rooms, nil
-}
-
-func requestRoomSearch(url, method string, query *models.CouchQuery) ([]models.RoomDB, error) {
-	var body []byte
-	var err error
-	if query != nil {
-		body, err = json.Marshal(query)
-		if err != nil {
-			return nil, err
-		}
-	}
-	// call makeRequest
-	var resp models.RoomResponse
-	err = couch.MakeRequest(method, url, "application/json", body, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Docs, nil
 }
