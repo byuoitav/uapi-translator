@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/byuoitav/uapi-translator/couch"
@@ -56,4 +57,35 @@ func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 	}
 
 	return displays, nil
+}
+
+func GetDisplayByID(dispID string) (*models.Display, error) {
+	s := strings.Split(dispID, "-")
+	url := fmt.Sprintf("%s/ui-configuration/%s", os.Getenv("DB_ADDRESS"), fmt.Sprintf("%s-%s", s[0], s[1]))
+
+	var resp models.DisplayDB
+	err := couch.DBSearch(url, "GET", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	if !strings.Contains(s[2], "Display") {
+		return nil, fmt.Errorf("Invalid display id")
+	}
+
+	var index int
+	if index, err = strconv.Atoi(strings.Trim(s[2], "Display")); err != nil {
+		return nil, fmt.Errorf("Invalid display id")
+	}
+
+	if index > len(resp.Presets) {
+		return nil, fmt.Errorf("Display does not exist")
+	}
+
+	display := &models.Display{
+		DisplayID: dispID,
+		RoomNum:   s[1],
+		BldgAbbr:  s[0],
+	}
+	return display, nil
 }

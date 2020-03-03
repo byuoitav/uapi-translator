@@ -120,9 +120,13 @@ func GetDisplays(c echo.Context) error {
 }
 
 func GetDisplayByID(c echo.Context) error {
-	// displayId := c.Param("av_display_id")
+	displayId := c.Param("av_display_id")
 
-	var display models.Display
+	display, err := services.GetDisplayByID(displayId)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
 	return c.JSON(http.StatusOK, display)
 }
 
