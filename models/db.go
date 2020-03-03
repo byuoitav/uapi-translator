@@ -56,3 +56,14 @@ type DeviceDB struct {
 	Rev string `json:"_rev,omitempty"`
 	*structs.Device
 }
+
+type DisplayResponse struct {
+	Docs     []DisplayDB `json:"docs"`
+	Bookmark string      `json:"bookmark"`
+	Warning  string      `json:"warning"`
+}
+
+type DisplayDB struct {
+	Rev string `json:"_rev,omitempty"`
+	*structs.UIConfig
+}

@@ -2,7 +2,10 @@ package services
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
+	"github.com/byuoitav/uapi-translator/couch"
 	"github.com/byuoitav/uapi-translator/models"
 )
 
@@ -11,13 +14,12 @@ import (
 //Create name for each preset group
 
 func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
-	// url := fmt.Sprintf("%s/ui-configuration/_find", os.Getenv("DB_ADDRESS"))
+	url := fmt.Sprintf("%s/ui-configuration/_find", os.Getenv("DB_ADDRESS"))
 	var query models.DisplayQuery
 
 	if roomNum != "" && bldgAbbr != "" {
-		roomID := fmt.Sprintf("%s-%s", bldgAbbr, roomNum)
 		query.Limit = 1000
-		query.Selector.ID.Regex = roomID
+		query.Selector.ID.Regex = fmt.Sprintf("%s-%s$", bldgAbbr, roomNum)
 	} else if roomNum != "" {
 		query.Limit = 1000
 		query.Selector.ID.Regex = fmt.Sprintf("-%s$", roomNum)
@@ -29,29 +31,29 @@ func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 		query.Selector.ID.GT = "\x00"
 	}
 	//post query
-	// dbDisplays, err := requestDisplaySearch(url, "POST", &query)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	//translate to models.Display
-	return nil, nil
+
+	var resp models.DisplayResponse
+	err := couch.DBSearch(url, "POST", &query, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	var displays []models.Display
+	if resp.Docs == nil {
+		return nil, fmt.Errorf("No displays")
+	}
+
+	for _, rm := range resp.Docs {
+		for j := range rm.Presets {
+			s := strings.Split(rm.ID, "-")
+			next := models.Display{
+				DisplayID: fmt.Sprintf("%s-Display%d", rm.ID, (j + 1)),
+				RoomNum:   s[1],
+				BldgAbbr:  s[0],
+			}
+			displays = append(displays, next)
+		}
+	}
+
+	return displays, nil
 }
-
-// func requestDisplaySearch(url, method string, query interface{}) ([]models.DisplayDB, error) {
-// 	var body []byte
-// 	var err error
-// 	if query != nil {
-// 		body, err = json.Marshal(query)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 	}
-
-// 	var resp models.DisplayResponse
-// 	err = couch.MakeRequest(method, url, "application/json", body, &resp)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return resp.Docs, nil
-// }
