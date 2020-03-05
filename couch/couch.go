@@ -23,10 +23,10 @@ func DBSearch(url, method string, query, resp interface{}) error {
 		}
 	}
 
-	log.P.Info("searching database", zap.String("query", string(body)))
+	log.P.Info("searching database", zap.String("method", method), zap.String("query", string(body)))
 	err = makeRequest(method, url, "application/json", body, &resp)
 	if err != nil {
-		log.P.Error("failed make db search request", zap.Error(err))
+		log.P.Error("failed to make db search request")
 		return err
 	}
 
@@ -60,14 +60,14 @@ func makeRequest(method, url, contentType string, body []byte, responseBody inte
 	}
 
 	if resp.StatusCode/100 != 2 {
-		log.P.Error("bad response code", zap.Int("resp code", resp.StatusCode), zap.String("body", b))
+		log.P.Error("bad response code", zap.Int("resp code", resp.StatusCode), zap.String("body", string(b)))
 		return fmt.Errorf("bad response code - %v: %s", resp.StatusCode, b)
 	}
 
 	if responseBody != nil {
 		err = json.Unmarshal(b, responseBody)
 		if err != nil {
-			log.P.Error("failure to unmarshal resp body", zap.String("body", b), zap.Error(err))
+			log.P.Error("failure to unmarshal resp body", zap.String("body", string(b)), zap.Error(err))
 			return err
 		}
 	}

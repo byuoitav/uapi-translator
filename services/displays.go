@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"go.uber.org/zap"
+
+	"github.com/byuoitav/scheduler/log"
 	"github.com/byuoitav/uapi-translator/couch"
 	"github.com/byuoitav/uapi-translator/models"
 )
@@ -15,15 +18,19 @@ func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 	var query models.DisplayQuery
 
 	if roomNum != "" && bldgAbbr != "" {
+		log.P.Info("searching displays by room number and building abbreviation", zap.String("roomNum", roomNum), zap.String("bldgAbbr", bldgAbbr))
 		query.Limit = 1000
 		query.Selector.ID.Regex = fmt.Sprintf("%s-%s$", bldgAbbr, roomNum)
 	} else if roomNum != "" {
+		log.P.Info("searching displays by room number", zap.String("roomNum", roomNum))
 		query.Limit = 1000
 		query.Selector.ID.Regex = fmt.Sprintf("-%s$", roomNum)
 	} else if bldgAbbr != "" {
+		log.P.Info("searching displays by building abbreviation", zap.String("bldgAbbr", bldgAbbr))
 		query.Limit = 1000
 		query.Selector.ID.Regex = fmt.Sprintf("%s-", bldgAbbr)
 	} else {
+		log.P.Info("getting all displays")
 		query.Limit = 30
 		query.Selector.ID.GT = "\x00"
 	}
@@ -31,12 +38,14 @@ func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 	var resp models.DisplayResponse
 	err := couch.DBSearch(url, "POST", &query, &resp)
 	if err != nil {
+		log.P.Error("failed to search for displays in database")
 		return nil, err
 	}
 
 	var displays []models.Display
 	if resp.Docs == nil {
-		return nil, fmt.Errorf("No displays")
+		log.P.Info("no displays resulted from query")
+		return nil, fmt.Errorf("No displays exist under the provided search criteria")
 	}
 
 	for _, rm := range resp.Docs {
@@ -55,8 +64,10 @@ func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 }
 
 func GetDisplayByID(dispID string) (*models.Display, error) {
+	log.P.Info("searching displays by display id", zap.String("id", dispID))
 	s, index, err := parseDisplayID(dispID)
 	if err != nil {
+		log.P.Error("provided display id is invalid", zap.String("id", dispID), zap.Error(err))
 		return nil, err
 	}
 
@@ -65,11 +76,12 @@ func GetDisplayByID(dispID string) (*models.Display, error) {
 	var resp models.DisplayDB
 	err = couch.DBSearch(url, "GET", nil, &resp)
 	if err != nil {
+		log.P.Error("failed to search for display in database")
 		return nil, err
 	}
 
 	if index > len(resp.Presets) {
-		return nil, fmt.Errorf("Display does not exist")
+		return nil, fmt.Errorf("Display: %s does not exist", dispID)
 	}
 
 	display := &models.Display{
@@ -81,8 +93,10 @@ func GetDisplayByID(dispID string) (*models.Display, error) {
 }
 
 func GetDisplayConfig(dispID string) (*models.DisplayConfig, error) {
+	log.P.Info("searching for display config", zap.String("id", dispID))
 	s, index, err := parseDisplayID(dispID)
 	if err != nil {
+		log.P.Error("provided display id is invalid", zap.String("id", dispID), zap.Error(err))
 		return nil, err
 	}
 
@@ -91,11 +105,12 @@ func GetDisplayConfig(dispID string) (*models.DisplayConfig, error) {
 	var resp models.DisplayDB
 	err = couch.DBSearch(url, "GET", nil, &resp)
 	if err != nil {
+		log.P.Error("failed to search for display config in database")
 		return nil, err
 	}
 
 	if index > len(resp.Presets) {
-		return nil, fmt.Errorf("Display does not exist")
+		return nil, fmt.Errorf("Display: %s does not exist", dispID)
 	}
 
 	var devices []string
@@ -117,6 +132,7 @@ func GetDisplayConfig(dispID string) (*models.DisplayConfig, error) {
 }
 
 func parseDisplayID(id string) ([]string, int, error) {
+	log.P.Info("parsing display id", zap.String("id", id))
 	s := strings.Split(id, "-")
 
 	if !strings.Contains(s[2], "Display") {

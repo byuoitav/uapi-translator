@@ -17,15 +17,15 @@ func GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
 	var query models.RoomQuery
 
 	if roomNum != "" && bldgAbbr != "" {
-		log.P.Info("getting rooms by room number and building abbreviation", zap.String("roomNum", roomNum), zap.String("bldgAbbr", bldgAbbr))
+		log.P.Info("searching rooms by room number and building abbreviation", zap.String("roomNum", roomNum), zap.String("bldgAbbr", bldgAbbr))
 		query.Limit = 1000
 		query.Selector.ID.Regex = fmt.Sprintf("%s-%s$", bldgAbbr, roomNum)
 	} else if roomNum != "" {
-		log.P.Info("getting rooms by room number", zap.String("roomNum", roomNum))
+		log.P.Info("searching rooms by room number", zap.String("roomNum", roomNum))
 		query.Limit = 1000
 		query.Selector.ID.Regex = fmt.Sprintf("-%s$", roomNum)
 	} else if bldgAbbr != "" {
-		log.P.Info("getting rooms by building abbreviation", zap.String("bldgAbbr", bldgAbbr))
+		log.P.Info("searching rooms by building abbreviation", zap.String("bldgAbbr", bldgAbbr))
 		query.Limit = 30 //Todo: get a definite answer on the limit
 		query.Selector.ID.Regex = bldgAbbr
 	} else {
@@ -44,7 +44,7 @@ func GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
 	var rooms []models.Room
 	if resp.Docs == nil {
 		log.P.Info("no rooms resulted from query")
-		return nil, fmt.Errorf("No rooms")
+		return nil, fmt.Errorf("No rooms exist under the provided search criteria")
 	}
 	for _, rm := range resp.Docs {
 		s := strings.Split(rm.ID, "-")
