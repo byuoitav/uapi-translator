@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/byuoitav/scheduler/log"
 	"github.com/byuoitav/uapi-translator/models"
 	"github.com/byuoitav/uapi-translator/services"
 
@@ -23,6 +24,7 @@ func GetRooms(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
+	log.P.Info("successfully retrieved rooms")
 	return c.JSON(http.StatusOK, rooms)
 }
 
@@ -35,6 +37,7 @@ func GetRoomByID(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
+	log.P.Info("successfully retrieved room by id")
 	return c.JSON(http.StatusOK, room)
 }
 
@@ -48,7 +51,6 @@ func GetRoomDevices(c echo.Context) error {
 //Devices
 
 func GetDevices(c echo.Context) error {
-
 	roomNum := c.QueryParam("room_number")
 	bldgAbbr := c.QueryParam("building_abbreviation")
 	deviceType := c.QueryParam("av_device_type")
@@ -58,6 +60,7 @@ func GetDevices(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
+	log.P.Info("successfully retrieved devices")
 	return c.JSON(http.StatusOK, devices)
 }
 
@@ -69,6 +72,7 @@ func GetDeviceByID(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
+	log.P.Info("successfully retrieved device by id")
 	return c.JSON(http.StatusOK, device)
 }
 
@@ -116,6 +120,7 @@ func GetDisplays(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
+	log.P.Info("successfully retrieved displays")
 	return c.JSON(http.StatusOK, displays)
 }
 
@@ -127,6 +132,7 @@ func GetDisplayByID(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
+	log.P.Info("successfully retrieved display by id")
 	return c.JSON(http.StatusOK, display)
 }
 
@@ -138,6 +144,7 @@ func GetDisplayConfig(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
+	log.P.Info("successfully retrieved display config")
 	return c.JSON(http.StatusOK, displayConfig)
 }
 
