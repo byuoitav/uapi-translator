@@ -10,10 +10,6 @@ import (
 	"github.com/byuoitav/uapi-translator/models"
 )
 
-//From ui config
-//Get presets
-//Create name for each preset group
-
 func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 	url := fmt.Sprintf("%s/ui-configuration/_find", os.Getenv("DB_ADDRESS"))
 	var query models.DisplayQuery
@@ -31,7 +27,6 @@ func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 		query.Limit = 30
 		query.Selector.ID.GT = "\x00"
 	}
-	//post query
 
 	var resp models.DisplayResponse
 	err := couch.DBSearch(url, "POST", &query, &resp)

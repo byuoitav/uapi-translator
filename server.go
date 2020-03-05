@@ -1,21 +1,57 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
-	"github.com/byuoitav/common"
+	"go.uber.org/zap"
+
+	"github.com/byuoitav/scheduler/log"
 	"github.com/byuoitav/uapi-translator/handlers"
+	"github.com/labstack/echo"
 	"github.com/spf13/pflag"
 )
 
 func main() {
 	var port int
+	var logLevel int
 
 	pflag.IntVarP(&port, "port", "p", 9101, "port to run the server on")
+	pflag.IntVarP(&logLevel, "log-level", "l", 2, "level of logging wanted. 1=DEBUG, 2=INFO, 3=WARN, 4=ERROR, 5=PANIC")
 	pflag.Parse()
 
-	router := common.NewRouter()
+	setLog := func(level int) error {
+		switch level {
+		case 1:
+			fmt.Printf("\nSetting log level to *debug*\n\n")
+			log.Config.Level.SetLevel(zap.DebugLevel)
+		case 2:
+			fmt.Printf("\nSetting log level to *info*\n\n")
+			log.Config.Level.SetLevel(zap.InfoLevel)
+		case 3:
+			fmt.Printf("\nSetting log level to *warn*\n\n")
+			log.Config.Level.SetLevel(zap.WarnLevel)
+		case 4:
+			fmt.Printf("\nSetting log level to *error*\n\n")
+			log.Config.Level.SetLevel(zap.ErrorLevel)
+		case 5:
+			fmt.Printf("\nSetting log level to *panic*\n\n")
+			log.Config.Level.SetLevel(zap.PanicLevel)
+		default:
+			return errors.New("invalid log level: must be [1-4]")
+		}
+
+		return nil
+	}
+
+	// set the initial log level
+	if err := setLog(logLevel); err != nil {
+		log.P.Fatal("unable to set log level", zap.Error(err), zap.Int("got", logLevel))
+	}
+
+	router := echo.New()
 
 	//Rooms
 	router.GET("/rooms", handlers.GetRooms)
@@ -43,12 +79,23 @@ func main() {
 	router.GET("/audio_outputs/:av_audio_output_id", handlers.GetAudioOutputByID)
 	router.GET("/audio_outputs/:av_audio_output_id/state", handlers.GetAudioOutputState)
 
-	addr := fmt.Sprintf(":%d", port)
-	err := router.StartServer(&http.Server{
-		Addr:           addr,
-		MaxHeaderBytes: 1024 * 10,
+	// Set log level
+	router.GET("/log/:level", func(c echo.Context) error {
+		level, err := strconv.Atoi(c.Param("level"))
+		if err != nil {
+			return c.String(http.StatusBadRequest, err.Error())
+		}
+
+		if err := setLog(level); err != nil {
+			return c.String(http.StatusBadRequest, err.Error())
+		}
+
+		return c.String(http.StatusOK, fmt.Sprintf("Set log level to %v", level))
 	})
+
+	addr := fmt.Sprintf(":%d", port)
+	err := router.Start(addr)
 	if err != nil {
-		// Log error
+		log.P.Fatal("failed to start server", zap.Error(err))
 	}
 }
