@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/byuoitav/scheduler/log"
-	"github.com/byuoitav/uapi-translator/couch"
+	"github.com/byuoitav/uapi-translator/db"
 	"github.com/byuoitav/uapi-translator/models"
 )
 
@@ -44,7 +44,7 @@ func GetDevices(roomNum, bldgAbbr, devType string) ([]models.Device, error) {
 	}
 
 	var resp models.DeviceResponse
-	err := couch.DBSearch(url, "POST", &query, &resp)
+	err := db.DBSearch(url, "POST", &query, &resp)
 	if err != nil {
 		log.P.Error("failed to search for devices in database")
 		return nil, fmt.Errorf("Failed to find devices")
@@ -74,7 +74,7 @@ func GetDeviceByID(deviceID string) (*models.Device, error) {
 	url := fmt.Sprintf("%s/devices/%s", os.Getenv("DB_ADDRESS"), deviceID)
 	var resp models.DeviceDB
 
-	err := couch.DBSearch(url, "GET", nil, &resp)
+	err := db.DBSearch(url, "GET", nil, &resp)
 	if err != nil {
 		log.P.Error("failed to search for device in database")
 		return nil, fmt.Errorf("Failed to find device with id: %s", deviceID)

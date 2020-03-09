@@ -67,3 +67,23 @@ type DisplayDB struct {
 	Rev string `json:"_rev,omitempty"`
 	*structs.UIConfig
 }
+
+type RoomState struct {
+	Displays     []StateDisplays     `json:"displays,omitempty"`
+	AudioDevices []StateAudioDevices `json:"audioDevices,omitempty"`
+}
+
+type StateDisplays struct {
+	Name    string `json:"name,omitempty"`
+	Power   string `json:"power,omitempty"`
+	Input   string `json:"input,omitempty"`
+	Blanked bool   `json:"blanked,omitempty"`
+}
+
+type StateAudioDevices struct {
+	Name   string `json:"name,omitempty"`
+	Power  string `json:"power,omitempty"`
+	Input  string `json:"input,omitempty"`
+	Muted  bool   `json:"muted,omitempty"`
+	Volume int    `json:"volume,omitempty"`
+}

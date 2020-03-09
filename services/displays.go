@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/byuoitav/scheduler/log"
-	"github.com/byuoitav/uapi-translator/couch"
+	"github.com/byuoitav/uapi-translator/db"
 	"github.com/byuoitav/uapi-translator/models"
 )
 
@@ -36,7 +36,7 @@ func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 	}
 
 	var resp models.DisplayResponse
-	err := couch.DBSearch(url, "POST", &query, &resp)
+	err := db.DBSearch(url, "POST", &query, &resp)
 	if err != nil {
 		log.P.Error("failed to search for displays in database")
 		return nil, err
@@ -71,17 +71,9 @@ func GetDisplayByID(dispID string) (*models.Display, error) {
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/ui-configuration/%s", os.Getenv("DB_ADDRESS"), fmt.Sprintf("%s-%s", s[0], s[1]))
-
-	var resp models.DisplayDB
-	err = couch.DBSearch(url, "GET", nil, &resp)
+	_, err = getDisplaysFromDB(s, index, dispID)
 	if err != nil {
-		log.P.Error("failed to search for display in database")
 		return nil, err
-	}
-
-	if index > len(resp.Presets) {
-		return nil, fmt.Errorf("Display: %s does not exist", dispID)
 	}
 
 	display := &models.Display{
@@ -100,26 +92,18 @@ func GetDisplayConfig(dispID string) (*models.DisplayConfig, error) {
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/ui-configuration/%s", os.Getenv("DB_ADDRESS"), fmt.Sprintf("%s-%s", s[0], s[1]))
-
-	var resp models.DisplayDB
-	err = couch.DBSearch(url, "GET", nil, &resp)
+	displays, err := getDisplaysFromDB(s, index, dispID)
 	if err != nil {
-		log.P.Error("failed to search for display config in database")
 		return nil, err
 	}
 
-	if index > len(resp.Presets) {
-		return nil, fmt.Errorf("Display: %s does not exist", dispID)
-	}
-
 	var devices []string
-	for _, dev := range resp.Presets[index-1].Displays {
+	for _, dev := range displays.Presets[index-1].Displays {
 		devices = append(devices, fmt.Sprintf("%s-%s-%s", s[0], s[1], dev))
 	}
 
 	var inputs []string
-	for _, in := range resp.Presets[index-1].Inputs {
+	for _, in := range displays.Presets[index-1].Inputs {
 		inputs = append(inputs, fmt.Sprintf("%s-%s-%s", s[0], s[1], in))
 	}
 
@@ -129,6 +113,47 @@ func GetDisplayConfig(dispID string) (*models.DisplayConfig, error) {
 	}
 
 	return config, nil
+}
+
+func GetDisplayState(dispID string) (*models.DisplayState, error) {
+	log.P.Info("searching for display state", zap.String("id", dispID))
+	s, index, err := parseDisplayID(dispID)
+	if err != nil {
+		log.P.Error("provided display id is invalid", zap.String("id", dispID), zap.Error(err))
+		return nil, err
+	}
+
+	//send request to av api
+	url := fmt.Sprintf("%s/buildings/%s/rooms/%s", os.Getenv("AV_API_URL"), s[0], s[1])
+
+	var resp models.RoomState
+	err = db.GetState(url, "GET", &resp)
+	if err != nil {
+		log.P.Error("failed to find display state in database")
+		return nil, err
+	}
+
+	displays, err := getDisplaysFromDB(s, index, dispID)
+	if err != nil {
+		return nil, err
+	}
+
+	//compare displays within the same preset
+	var firstDisplay models.StateDisplays
+	for i, p := range displays.Presets[index-1].Displays {
+		if i == 0 {
+			firstDisplay = 
+		} else {
+
+		}
+	}
+
+	state := &models.DisplayState{
+		Powered: true,
+		Blanked: true,
+		Input:   "test",
+	}
+	return state, nil
 }
 
 func parseDisplayID(id string) ([]string, int, error) {
@@ -145,4 +170,30 @@ func parseDisplayID(id string) ([]string, int, error) {
 	}
 
 	return s, index, nil
+}
+
+func findDisplayIndex(id string, obj *models.RoomState) int {
+	for index, disp := range obj. {
+		if id == disp {
+			return index
+		}
+	}
+	return -1
+}
+
+func getDisplaysFromDB(parsedID []string, index int, dispID string) (*models.DisplayDB, error) {
+	url := fmt.Sprintf("%s/ui-configuration/%s", os.Getenv("DB_ADDRESS"), fmt.Sprintf("%s-%s", parsedID[0], parsedID[1]))
+
+	var resp models.DisplayDB
+	err := db.DBSearch(url, "GET", nil, &resp)
+	if err != nil {
+		log.P.Error("failed to find display config in database")
+		return nil, err
+	}
+
+	if index > len(resp.Presets) {
+		return nil, fmt.Errorf("Display: %s does not exist", dispID)
+	}
+
+	return &resp, err
 }

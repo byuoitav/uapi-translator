@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/byuoitav/scheduler/log"
-	"github.com/byuoitav/uapi-translator/couch"
+	"github.com/byuoitav/uapi-translator/db"
 	"github.com/byuoitav/uapi-translator/models"
 )
 
@@ -35,7 +35,7 @@ func GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
 	}
 
 	var resp models.RoomResponse
-	err := couch.DBSearch(url, "POST", &query, &resp)
+	err := db.DBSearch(url, "POST", &query, &resp)
 	if err != nil {
 		log.P.Error("failed to search for rooms in database", zap.Error(err))
 		return nil, err
