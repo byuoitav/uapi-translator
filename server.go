@@ -8,8 +8,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/byuoitav/scheduler/log"
 	"github.com/byuoitav/uapi-translator/handlers"
+	"github.com/byuoitav/uapi-translator/log"
 	"github.com/labstack/echo"
 	"github.com/spf13/pflag"
 )
@@ -48,7 +48,7 @@ func main() {
 
 	// set the initial log level
 	if err := setLog(logLevel); err != nil {
-		log.P.Fatal("unable to set log level", zap.Error(err), zap.Int("got", logLevel))
+		log.Log.Fatal("unable to set log level", zap.Error(err), zap.Int("got", logLevel))
 	}
 
 	router := echo.New()
@@ -96,6 +96,6 @@ func main() {
 	addr := fmt.Sprintf(":%d", port)
 	err := router.Start(addr)
 	if err != nil {
-		log.P.Fatal("failed to start server", zap.Error(err))
+		log.Log.Fatal("failed to start server", zap.Error(err))
 	}
 }

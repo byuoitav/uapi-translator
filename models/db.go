@@ -69,18 +69,18 @@ type DisplayDB struct {
 }
 
 type RoomState struct {
-	Displays     []StateDisplays     `json:"displays,omitempty"`
-	AudioDevices []StateAudioDevices `json:"audioDevices,omitempty"`
+	Displays     []StateDisplay     `json:"displays,omitempty"`
+	AudioDevices []StateAudioDevice `json:"audioDevices,omitempty"`
 }
 
-type StateDisplays struct {
+type StateDisplay struct {
 	Name    string `json:"name,omitempty"`
 	Power   string `json:"power,omitempty"`
 	Input   string `json:"input,omitempty"`
 	Blanked bool   `json:"blanked,omitempty"`
 }
 
-type StateAudioDevices struct {
+type StateAudioDevice struct {
 	Name   string `json:"name,omitempty"`
 	Power  string `json:"power,omitempty"`
 	Input  string `json:"input,omitempty"`

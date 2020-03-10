@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/byuoitav/scheduler/log"
+	"github.com/byuoitav/uapi-translator/log"
 	"github.com/byuoitav/uapi-translator/models"
 	"github.com/byuoitav/uapi-translator/services"
 
@@ -24,7 +24,7 @@ func GetRooms(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	log.P.Info("successfully retrieved rooms")
+	log.Log.Info("successfully retrieved rooms")
 	return c.JSON(http.StatusOK, rooms)
 }
 
@@ -37,7 +37,7 @@ func GetRoomByID(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	log.P.Info("successfully retrieved room by id")
+	log.Log.Info("successfully retrieved room by id")
 	return c.JSON(http.StatusOK, room)
 }
 
@@ -60,7 +60,7 @@ func GetDevices(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	log.P.Info("successfully retrieved devices")
+	log.Log.Info("successfully retrieved devices")
 	return c.JSON(http.StatusOK, devices)
 }
 
@@ -72,7 +72,7 @@ func GetDeviceByID(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	log.P.Info("successfully retrieved device by id")
+	log.Log.Info("successfully retrieved device by id")
 	return c.JSON(http.StatusOK, device)
 }
 
@@ -120,7 +120,7 @@ func GetDisplays(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	log.P.Info("successfully retrieved displays")
+	log.Log.Info("successfully retrieved displays")
 	return c.JSON(http.StatusOK, displays)
 }
 
@@ -132,7 +132,7 @@ func GetDisplayByID(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	log.P.Info("successfully retrieved display by id")
+	log.Log.Info("successfully retrieved display by id")
 	return c.JSON(http.StatusOK, display)
 }
 
@@ -144,14 +144,19 @@ func GetDisplayConfig(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	log.P.Info("successfully retrieved display config")
+	log.Log.Info("successfully retrieved display config")
 	return c.JSON(http.StatusOK, displayConfig)
 }
 
 func GetDisplayState(c echo.Context) error {
-	// displayId := c.Param("av_display_id")
+	displayId := c.Param("av_display_id")
 
-	var displayState models.DisplayState
+	displayState, err := services.GetDisplayState(displayId)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	log.Log.Info("successfully retrieved display state")
 	return c.JSON(http.StatusOK, displayState)
 }
 
