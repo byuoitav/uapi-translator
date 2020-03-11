@@ -27,7 +27,7 @@ type DeviceQuery struct {
 	Limit int `json:"limit"`
 }
 
-type DisplayQuery struct {
+type UIConfigQuery struct {
 	Selector struct {
 		ID CouchSearch `json:"_id"`
 	} `json:"selector"`
@@ -64,6 +64,17 @@ type DisplayResponse struct {
 }
 
 type DisplayDB struct {
+	Rev string `json:"_rev,omitempty"`
+	*structs.UIConfig
+}
+
+type AudioOutputResponse struct {
+	Docs     []AudioOutputDB `json:"docs"`
+	Bookmark string          `json:"bookmark"`
+	Warning  string          `json:"warning"`
+}
+
+type AudioOutputDB struct {
 	Rev string `json:"_rev,omitempty"`
 	*structs.UIConfig
 }

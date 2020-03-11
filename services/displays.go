@@ -15,7 +15,7 @@ import (
 
 func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 	url := fmt.Sprintf("%s/ui-configuration/_find", os.Getenv("DB_ADDRESS"))
-	var query models.DisplayQuery
+	var query models.UIConfigQuery
 
 	if roomNum != "" && bldgAbbr != "" {
 		log.Log.Info("searching displays by room number and building abbreviation", zap.String("roomNum", roomNum), zap.String("bldgAbbr", bldgAbbr))
@@ -49,10 +49,10 @@ func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 	}
 
 	for _, rm := range resp.Docs {
-		for j := range rm.Presets {
+		for i := range rm.Presets {
 			s := strings.Split(rm.ID, "-")
 			next := models.Display{
-				DisplayID: fmt.Sprintf("%s-Display%d", rm.ID, (j + 1)),
+				DisplayID: fmt.Sprintf("%s-Display%d", rm.ID, (i + 1)),
 				RoomNum:   s[1],
 				BldgAbbr:  s[0],
 			}

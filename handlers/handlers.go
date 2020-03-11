@@ -24,7 +24,7 @@ func GetRooms(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	log.Log.Info("successfully retrieved rooms")
+	log.Log.Infof("successfully retrieved: %d rooms", len(rooms))
 	return c.JSON(http.StatusOK, rooms)
 }
 
@@ -60,7 +60,7 @@ func GetDevices(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	log.Log.Info("successfully retrieved devices")
+	log.Log.Infof("successfully retrieved: %d devices", len(devices))
 	return c.JSON(http.StatusOK, devices)
 }
 
@@ -120,7 +120,7 @@ func GetDisplays(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	log.Log.Info("successfully retrieved displays")
+	log.Log.Infof("successfully retrieved: %d displays", len(displays))
 	return c.JSON(http.StatusOK, displays)
 }
 
@@ -163,19 +163,28 @@ func GetDisplayState(c echo.Context) error {
 //Audio Outputs
 
 func GetAudioOutputs(c echo.Context) error {
+	roomNum := c.QueryParam("room_number")
+	bldgAbbr := c.QueryParam("building_abbreviation")
+	deviceType := c.QueryParam("av_device_type")
 
-	// roomNum := c.QueryParam("room_number")
-	// bldgAbbr := c.QueryParam("building_abbreviation")
-	// deviceType := c.QueryParam("av_device_type")
+	outputs, err := services.GetAudioOutputs(roomNum, bldgAbbr, deviceType)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
 
-	var outputs []models.AudioOutput
+	log.Log.Infof("successfully retrieved: %d audio outputs", len(outputs))
 	return c.JSON(http.StatusOK, outputs)
 }
 
 func GetAudioOutputByID(c echo.Context) error {
-	// outputId := c.Param("av_audio_output_id")
+	outputId := c.Param("av_audio_output_id")
 
-	var output models.AudioOutput
+	output, err := services.GetAudioOutputByID(outputId)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	log.Log.Info("successfully retrieved audio output by id")
 	return c.JSON(http.StatusOK, output)
 }
 
