@@ -103,16 +103,22 @@ func GetAudioOutputByID(id string) (*models.AudioOutput, error) {
 		return nil, err
 	}
 
-	var output *models.AudioOutput
+	var devType string
 	if index == -1 {
-		// find output by id
-	} else {
-		output = &models.AudioOutput{
-			OutputID:   id,
-			RoomNum:    s[1],
-			BldgAbbr:   s[0],
-			DeviceType: "MasterAudio",
+		device, err := GetDeviceByID(id)
+		if err != nil {
+			return nil, err
 		}
+		devType = device.DeviceType
+	} else {
+		devType = "MasterAudio"
+	}
+
+	output := &models.AudioOutput{
+		OutputID:   id,
+		RoomNum:    s[1],
+		BldgAbbr:   s[0],
+		DeviceType: devType,
 	}
 
 	return output, nil
