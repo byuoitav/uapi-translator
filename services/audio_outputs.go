@@ -124,6 +124,68 @@ func GetAudioOutputByID(id string) (*models.AudioOutput, error) {
 	return output, nil
 }
 
+func GetAudioOutputState(id string) (*models.AudioOutputState, error) {
+	// get ui config
+	log.Log.Info("getting audio output state by id", zap.String("id", id))
+	s, index, err := parseOutputID(id)
+	if err != nil {
+		log.Log.Error("provided audio output id is invalid", zap.String("id", id), zap.Error(err))
+		return nil, err
+	}
+
+	config, err = getAudioOutputsFromDB(s, index, id)
+	if err != nil {
+		return nil, err
+	}
+
+	//Get room state from av-api
+	url := fmt.Sprintf("%s/buildings/%s/rooms/%s", os.Getenv("AV_API_URL"), s[0], s[1])
+
+	var room models.RoomState
+	err = db.GetState(url, "GET", &room)
+	if err != nil {
+		log.Log.Error("failed to find audio output state in database")
+		return nil, err
+	}
+	
+	var state *models.AudioOutputState
+	if strings.Contains(id, "MasterAudio") {
+
+		//Compare to audio devices in preset
+		//Take average of volumes
+
+	} else {
+
+		//Check if the id is found in the independent audio devices
+		for _, p := range room.Docs[0].Presets {
+			for _, dev := range p.IndependentAudioDevices {
+				if dev == s[3] {
+					i := findAudioIndex(dev, room.StateAudioDevices)
+					if i > -1 {
+						return  &models.AudioOutputState {
+							Volume: room.StateAudioDevices[i].Volume,
+							Muted: room.StateAudioDevices[i].Muted,
+						}, nil
+					}
+				}
+			}
+		}
+		
+	}
+	
+	log.Log.Infof("no state found for audio output device: %d", id)
+	return nil, fmt.Errorf("no state found for audio output device: %d", id)
+}
+
+func findAudioIndex(name string, devices *models.RoomState.StateAudioDevices) int {
+	for i, dev := range devices {
+		if name == dev.Name {
+			return i
+		}
+	}
+	return -1
+}
+
 func parseOutputID(id string) ([]string, int, error) {
 	log.Log.Info("parsing audio output id", zap.String("id", id))
 	s := strings.Split(id, "-")
