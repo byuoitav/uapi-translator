@@ -189,8 +189,13 @@ func GetAudioOutputByID(c echo.Context) error {
 }
 
 func GetAudioOutputState(c echo.Context) error {
-	// outputId := c.Param("av_audio_output_id")
+	outputId := c.Param("av_audio_output_id")
 
-	var outputState models.AudioOutputState
+	outputState, err := services.GetAudioOutputState(outputId)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	log.Log.Info("successfully retrieved audio output state by id")
 	return c.JSON(http.StatusOK, outputState)
 }

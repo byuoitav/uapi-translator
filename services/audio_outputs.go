@@ -133,7 +133,7 @@ func GetAudioOutputState(id string) (*models.AudioOutputState, error) {
 		return nil, err
 	}
 
-	config, err = getAudioOutputsFromDB(s, index, id)
+	config, err := getAudioOutputsFromDB(s, index, id)
 	if err != nil {
 		return nil, err
 	}
@@ -148,42 +148,40 @@ func GetAudioOutputState(id string) (*models.AudioOutputState, error) {
 		return nil, err
 	}
 	
-	var state *models.AudioOutputState
 	if index > -1 {
 		//Compare to audio devices in preset
-		var volumeTotal int
-		var numDevices int
+		var volume int
+		numDevices := 0
 		muted := false
-		for _, p := range room.Docs[index - 1].Presets {
-			for _, dev := range p.AudioDevices {
-				if dev == s[3] {
-					i := findAudioIndex(dev, room.StateAudioDevices)
-					if i > -1 {
-						numDevices++
-						volumeTotal += room.StateAudioDevices[i].Volume
-						if room.StateAudioDevices[i].Muted {
-							muted = true
-						}
-					}
+		for _, dev := range config.Presets[index - 1].AudioDevices {
+			i := findAudioIndex(dev, room.AudioDevices)
+			if i > -1 {
+				numDevices++
+				volume += room.AudioDevices[i].Volume
+				if room.AudioDevices[i].Muted {
+					muted = true
 				}
 			}
 		}
 		//Take average of volumes
+		if numDevices > 0 {
+			volume /= numDevices
+		}
 		return &models.AudioOutputState{
-			Volume: volumeTotal / numDevices,
+			Volume: volume,
 			Muted: muted,
 		}, nil
 	} else {
 
 		//Check if the id is found in the independent audio devices
-		for _, p := range room.Docs[0].Presets {
+		for _, p := range config.Presets {
 			for _, dev := range p.IndependentAudioDevices {
-				if dev == s[3] {
-					i := findAudioIndex(dev, room.StateAudioDevices)
+				if dev == s[2] {
+					i := findAudioIndex(dev, room.AudioDevices)
 					if i > -1 {
 						return  &models.AudioOutputState {
-							Volume: room.StateAudioDevices[i].Volume,
-							Muted: room.StateAudioDevices[i].Muted,
+							Volume: room.AudioDevices[i].Volume,
+							Muted: room.AudioDevices[i].Muted,
 						}, nil
 					}
 				}
@@ -192,11 +190,11 @@ func GetAudioOutputState(id string) (*models.AudioOutputState, error) {
 		
 	}
 	
-	log.Log.Infof("no state found for audio output device: %d", id)
-	return nil, fmt.Errorf("no state found for audio output device: %d", id)
+	log.Log.Infof("no state found for audio output device: %s", id)
+	return nil, fmt.Errorf("no state found for audio output device: %s", id)
 }
 
-func findAudioIndex(name string, devices *models.RoomState.StateAudioDevices) int {
+func findAudioIndex(name string, devices []models.StateAudioDevice) int {
 	for i, dev := range devices {
 		if name == dev.Name {
 			return i
