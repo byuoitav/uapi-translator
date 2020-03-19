@@ -149,11 +149,30 @@ func GetAudioOutputState(id string) (*models.AudioOutputState, error) {
 	}
 	
 	var state *models.AudioOutputState
-	if strings.Contains(id, "MasterAudio") {
-
+	if index > -1 {
 		//Compare to audio devices in preset
+		var volumeTotal int
+		var numDevices int
+		muted := false
+		for _, p := range room.Docs[index - 1].Presets {
+			for _, dev := range p.AudioDevices {
+				if dev == s[3] {
+					i := findAudioIndex(dev, room.StateAudioDevices)
+					if i > -1 {
+						numDevices++
+						volumeTotal += room.StateAudioDevices[i].Volume
+						if room.StateAudioDevices[i].Muted {
+							muted = true
+						}
+					}
+				}
+			}
+		}
 		//Take average of volumes
-
+		return &models.AudioOutputState{
+			Volume: volumeTotal / numDevices,
+			Muted: muted,
+		}, nil
 	} else {
 
 		//Check if the id is found in the independent audio devices
