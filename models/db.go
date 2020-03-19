@@ -98,3 +98,14 @@ type StateAudioDevice struct {
 	Muted  bool   `json:"muted,omitempty"`
 	Volume int    `json:"volume,omitempty"`
 }
+
+type InputResponse struct {
+	Docs     []InputDB `json:"docs"`
+	Bookmark string    `json:"bookmark"`
+	Warning  string    `json:"warning"`
+}
+
+type InputDB struct {
+	Rev string `json:"_rev,omitempty"`
+	*structs.UIConfig
+}

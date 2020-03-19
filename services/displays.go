@@ -27,7 +27,7 @@ func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 		query.Selector.ID.Regex = fmt.Sprintf("-%s$", roomNum)
 	} else if bldgAbbr != "" {
 		log.Log.Info("searching displays by building abbreviation", zap.String("bldgAbbr", bldgAbbr))
-		query.Limit = 1000
+		query.Limit = 30
 		query.Selector.ID.Regex = fmt.Sprintf("%s-", bldgAbbr)
 	} else {
 		log.Log.Info("getting all displays")

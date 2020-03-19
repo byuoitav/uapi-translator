@@ -94,10 +94,15 @@ func GetDeviceState(c echo.Context) error {
 
 func GetInputs(c echo.Context) error {
 
-	// roomNum := c.QueryParam("room_number")
-	// bldgAbbr := c.QueryParam("building_abbreviation")
+	roomNum := c.QueryParam("room_number")
+	bldgAbbr := c.QueryParam("building_abbreviation")
 
-	var inputs []models.Input
+	inputs, err := services.GetInputs(roomNum, bldgAbbr)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	log.Log.Infof("successfully retrieved: %d inputs", len(inputs))
 	return c.JSON(http.StatusOK, inputs)
 }
 
