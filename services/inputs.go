@@ -50,7 +50,7 @@ func GetInputs(roomNum, bldgAbbr string) ([]models.Input, error) {
 				RoomNum:    s[1],
 				BldgAbbr:   s[0],
 				DeviceType: getDeviceType(deviceID),
-				Outputs:    nil,
+				Outputs:    getInputDisplays(in.Name, &rm),
 			}
 			inputs = append(inputs, next)
 		}
@@ -61,10 +61,23 @@ func GetInputs(roomNum, bldgAbbr string) ([]models.Input, error) {
 
 func GetInputByID(id string) (*models.Input, error) {
 	log.Log.Info("searching inputs by id", zap.String("id", id))
+	s := strings.Split(id, "-")
 
 	device, err := GetDeviceByID(id)
 	if err != nil {
 		log.Log.Errorf("failed to find input in database", zap.Error(err))
+		return nil, err
+	}
+
+	var query models.UIConfigQuery
+	query.Limit = 1000
+	query.Selector.ID.Regex = fmt.Sprintf("%s-%s$", s[0], s[1])
+	url := fmt.Sprintf("%s/ui-configuration/_find", os.Getenv("DB_ADDRESS"))
+
+	var resp models.InputResponse
+	err = db.DBSearch(url, "POST", &query, &resp)
+	if err != nil {
+		log.Log.Error("failed to search for input in database")
 		return nil, err
 	}
 
@@ -73,8 +86,21 @@ func GetInputByID(id string) (*models.Input, error) {
 		RoomNum:    device.RoomNum,
 		BldgAbbr:   device.BldgAbbr,
 		DeviceType: device.DeviceType,
-		Outputs:    nil,
+		Outputs:    getInputDisplays(s[2], &resp.Docs[0]),
 	}
 
 	return input, nil
+}
+
+func getInputDisplays(inputID string, resp *models.InputDB) []string {
+	var displays []string
+	s := strings.Split(resp.ID, "-")
+	for i, p := range resp.Presets {
+		for _, in := range p.Inputs {
+			if inputID == in {
+				displays = append(displays, fmt.Sprintf("%s-%s-Display%d", s[0], s[1], (i + 1)))
+			}
+		}
+	}
+	return displays
 }
