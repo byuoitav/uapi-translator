@@ -107,9 +107,14 @@ func GetInputs(c echo.Context) error {
 }
 
 func GetInputByID(c echo.Context) error {
-	// deviceId := c.Param("av_device_id")
+	deviceId := c.Param("av_device_id")
 
-	var input models.Input
+	input, err := services.GetInputByID(deviceId)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	log.Log.Info("successfully retrieved input by id")
 	return c.JSON(http.StatusOK, input)
 }
 

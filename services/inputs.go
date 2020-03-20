@@ -46,15 +46,35 @@ func GetInputs(roomNum, bldgAbbr string) ([]models.Input, error) {
 		for _, in := range rm.InputConfiguration {
 			deviceID := fmt.Sprintf("%s-%s", rm.ID, in.Name)
 			next := models.Input{
-				DeviceID: deviceID,
-				RoomNum: s[1],
-				BldgAbbr: s[0],
+				DeviceID:   deviceID,
+				RoomNum:    s[1],
+				BldgAbbr:   s[0],
 				DeviceType: getDeviceType(deviceID),
-				Outputs: nil,
+				Outputs:    nil,
 			}
 			inputs = append(inputs, next)
 		}
 	}
 
 	return inputs, nil
+}
+
+func GetInputByID(id string) (*models.Input, error) {
+	log.Log.Info("searching inputs by id", zap.String("id", id))
+
+	device, err := GetDeviceByID(id)
+	if err != nil {
+		log.Log.Errorf("failed to find input in database", zap.Error(err))
+		return nil, err
+	}
+
+	input := &models.Input{
+		DeviceID:   device.DeviceID,
+		RoomNum:    device.RoomNum,
+		BldgAbbr:   device.BldgAbbr,
+		DeviceType: device.DeviceType,
+		Outputs:    nil,
+	}
+
+	return input, nil
 }
