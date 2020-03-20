@@ -42,9 +42,14 @@ func GetRoomByID(c echo.Context) error {
 }
 
 func GetRoomDevices(c echo.Context) error {
-	// roomId := c.Param("room_id")
+	roomId := c.Param("room_id")
 
-	var devices models.RoomDevices
+	devices, err := services.GetRoomDevices(roomId)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	log.Log.Info("successfully retrieved room devices")
 	return c.JSON(http.StatusOK, devices)
 }
 

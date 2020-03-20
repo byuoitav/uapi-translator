@@ -8,9 +8,9 @@ type Room struct {
 }
 
 type RoomDevices struct {
-	Displays []Display     `json:"av_displays"`
-	Outputs  []AudioOutput `json:"av_audio_outputs"`
-	Inputs   []Input       `json:"av_inputs"`
+	Displays []string `json:"av_displays"`
+	Outputs  []string `json:"av_audio_outputs"`
+	Inputs   []string `json:"av_inputs"`
 }
 
 //Devices

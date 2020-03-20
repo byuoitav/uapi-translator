@@ -58,26 +58,35 @@ func GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
 	return rooms, nil
 }
 
-// func GetRoomDevices(roomID string) ([]models.RoomDevices, error) {
-// 	rooms, err := requestRoomByID(roomID)
-// 	if err != nil {
-// 		return nil, err
-// 	} else if rooms == nil {
-// 		return nil, nil //Return error stating no rooms found?
-// 	}
+func GetRoomDevices(roomID string) (*models.RoomDevices, error) {
+	// Check if room exists
+	s := strings.Split(roomID, "-")
+	_, err := GetRooms(s[1], s[0])
+	if err != nil {
+		return nil, fmt.Errorf("No rooms exist with the id: %s", roomID)
+	}
 
-//	// Get devices????
+	var devices models.RoomDevices
+	displays, err := GetDisplays(s[1], s[0])
+	if err == nil {
+		for _, disp := range displays {
+			devices.Displays = append(devices.Displays, disp.DisplayID)
+		}
+	}
 
-// 	var devices []models.RoomDevices
-// for _, d := range rooms[0].Devices {
-// 	s := strings.Split(rooms[0].ID, "-")
-// 	next := &models.Device{
-// 		deviceID:   d.ID,
-// 		deviceName: d.Name,
-// 		deviceType: d.Type.ID,
-// 		bldgAbbr:   s[0],
-// 		roomNum:    s[1],
-// 	}
-// }
-// 	return devices, nil
-// }
+	audioOutputs, err := GetAudioOutputs(s[1], s[0], "")
+	if err == nil {
+		for _, out := range audioOutputs {
+			devices.Outputs = append(devices.Outputs, out.OutputID)
+		}
+	}
+	
+	inputs, err := GetInputs(s[1], s[0])
+	if err == nil {
+		for _, in := range inputs {
+			devices.Inputs = append(devices.Inputs, in.DeviceID)
+		}
+	}
+
+	return &devices, nil
+}
