@@ -1,39 +1,101 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 
-	"github.com/byuoitav/common"
-	"github.com/byuoitav/common/log"
+	"go.uber.org/zap"
+
 	"github.com/byuoitav/uapi-translator/handlers"
-	"github.com/fatih/color"
+	"github.com/byuoitav/uapi-translator/log"
+	"github.com/labstack/echo"
+	"github.com/spf13/pflag"
 )
 
 func main() {
-	log.L.Infof("%s %s %s", color.HiCyanString("Brwaap!"), color.HiGreenString("GoGo"), color.HiYellowString("the parrot!"))
+	var port int
+	var logLevel int
 
-	port := ":9101"
+	pflag.IntVarP(&port, "port", "p", 9101, "port to run the server on")
+	pflag.IntVarP(&logLevel, "log-level", "l", 2, "level of logging wanted. 1=DEBUG, 2=INFO, 3=WARN, 4=ERROR, 5=PANIC")
+	pflag.Parse()
 
-	router := common.NewRouter()
+	setLog := func(level int) error {
+		switch level {
+		case 1:
+			fmt.Printf("\nSetting log level to *debug*\n\n")
+			log.Config.Level.SetLevel(zap.DebugLevel)
+		case 2:
+			fmt.Printf("\nSetting log level to *info*\n\n")
+			log.Config.Level.SetLevel(zap.InfoLevel)
+		case 3:
+			fmt.Printf("\nSetting log level to *warn*\n\n")
+			log.Config.Level.SetLevel(zap.WarnLevel)
+		case 4:
+			fmt.Printf("\nSetting log level to *error*\n\n")
+			log.Config.Level.SetLevel(zap.ErrorLevel)
+		case 5:
+			fmt.Printf("\nSetting log level to *panic*\n\n")
+			log.Config.Level.SetLevel(zap.PanicLevel)
+		default:
+			return errors.New("invalid log level: must be [1-4]")
+		}
 
-	// Log Endpoints
-	router.PUT("/log-level/:level", log.SetLogLevel)
-	router.GET("/log-level", log.GetLogLevel)
-
-	// Basic Endpoint
-	router.GET("/:roomID", handlers.GetBasic)
-
-	// State Endpoints
-	router.GET("/:roomID/av_state", handlers.State)
-	router.PUT("/:roomID/av_state", handlers.State)
-
-	// Config Endpoints
-	router.GET("/:roomID/av_config", handlers.GetConfig)
-
-	server := http.Server{
-		Addr:           port,
-		MaxHeaderBytes: 1024 * 10,
+		return nil
 	}
 
-	router.StartServer(&server)
+	// set the initial log level
+	if err := setLog(logLevel); err != nil {
+		log.Log.Fatal("unable to set log level", zap.Error(err), zap.Int("got", logLevel))
+	}
+
+	router := echo.New()
+
+	//Rooms
+	router.GET("/rooms", handlers.GetRooms)
+	router.GET("/rooms/:room_id", handlers.GetRoomByID)
+	router.GET("/rooms/:room_id/devices", handlers.GetRoomDevices)
+
+	//Devices
+	router.GET("/devices", handlers.GetDevices)
+	router.GET("/devices/:av_device_id", handlers.GetDeviceByID)
+	router.GET("/devices/:av_device_id/properties", handlers.GetDeviceProperties)
+	router.GET("/devices/:av_device_id/state", handlers.GetDeviceState)
+
+	//Inputs
+	router.GET("/inputs", handlers.GetInputs)
+	router.GET("/inputs/:av_device_id", handlers.GetInputByID)
+
+	//Displays
+	router.GET("/displays", handlers.GetDisplays)
+	router.GET("/displays/:av_display_id", handlers.GetDisplayByID)
+	router.GET("/displays/:av_display_id/config", handlers.GetDisplayConfig)
+	router.GET("/displays/:av_display_id/state", handlers.GetDisplayState)
+
+	//Audio Outputs
+	router.GET("/audio_outputs", handlers.GetAudioOutputs)
+	router.GET("/audio_outputs/:av_audio_output_id", handlers.GetAudioOutputByID)
+	router.GET("/audio_outputs/:av_audio_output_id/state", handlers.GetAudioOutputState)
+
+	// Set log level
+	router.GET("/log/:level", func(c echo.Context) error {
+		level, err := strconv.Atoi(c.Param("level"))
+		if err != nil {
+			return c.String(http.StatusBadRequest, err.Error())
+		}
+
+		if err := setLog(level); err != nil {
+			return c.String(http.StatusBadRequest, err.Error())
+		}
+
+		return c.String(http.StatusOK, fmt.Sprintf("Set log level to %v", level))
+	})
+
+	addr := fmt.Sprintf(":%d", port)
+	err := router.Start(addr)
+	if err != nil {
+		log.Log.Fatal("failed to start server", zap.Error(err))
+	}
 }
