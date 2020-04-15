@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
 	"go.uber.org/zap"
 
 	"github.com/byuoitav/uapi-translator/handlers"
 	"github.com/byuoitav/uapi-translator/log"
+	"github.com/byuoitav/uapi-translator/middleware"
 	"github.com/labstack/echo"
 	"github.com/spf13/pflag"
 )
@@ -17,9 +19,15 @@ import (
 func main() {
 	var port int
 	var logLevel int
+	var opaURL string
+	var opaToken string
+	var disableAuth bool
 
 	pflag.IntVarP(&port, "port", "p", 9101, "port to run the server on")
 	pflag.IntVarP(&logLevel, "log-level", "l", 2, "level of logging wanted. 1=DEBUG, 2=INFO, 3=WARN, 4=ERROR, 5=PANIC")
+	pflag.StringVar(&opaURL, "opa-url", "", "URL where the OPA server can be found")
+	pflag.StringVar(&opaToken, "opa-token", "", "token to use when calling OPA")
+	pflag.BoolVar(&disableAuth, "disable-auth", false, "disables authz/n checks")
 	pflag.Parse()
 
 	setLog := func(level int) error {
@@ -52,6 +60,20 @@ func main() {
 	}
 
 	router := echo.New()
+
+	// If authz/n hasn't been disabled
+	if !disableAuth {
+		if opaURL == "" {
+			log.Log.Errorf("No OPA URL was set, but authz has not been disabled")
+			os.Exit(1)
+		}
+		opaClient := middleware.OPAClient{
+			URL:   opaURL,
+			Token: opaToken,
+		}
+
+		router.Use(opaClient.Authorize)
+	}
 
 	//Rooms
 	router.GET("/rooms", handlers.GetRooms)
