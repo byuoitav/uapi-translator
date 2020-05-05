@@ -60,7 +60,7 @@ func (client *OPAClient) Authorize(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Error while contacting authorization server")
 		}
 		if res.StatusCode != http.StatusOK {
-			log.Log.Errorf("Got back non 200 status from OPA: %s", err)
+			log.Log.Errorf("Got back non 200 status from OPA: %d", res.StatusCode)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Error while contacting authorization server")
 		}
 

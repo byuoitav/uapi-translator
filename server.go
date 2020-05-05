@@ -69,6 +69,8 @@ func main() {
 
 	router := echo.New()
 
+	authRouter := router.Group("")
+
 	// If authz/n hasn't been disabled
 	if !disableAuth {
 		if opaURL == "" {
@@ -80,7 +82,7 @@ func main() {
 			Token: opaToken,
 		}
 
-		router.Use(opaClient.Authorize)
+		authRouter.Use(opaClient.Authorize)
 	}
 
 	db := db.Service{
@@ -95,31 +97,36 @@ func main() {
 		Services: &s,
 	}
 
+	// Status
+	router.GET("/healthz", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Everything is all right!")
+	})
+
 	//Rooms
-	router.GET("/rooms", h.GetRooms)
-	router.GET("/rooms/:room_id", h.GetRoomByID)
-	router.GET("/rooms/:room_id/devices", h.GetRoomDevices)
+	authRouter.GET("/rooms", h.GetRooms)
+	authRouter.GET("/rooms/:room_id", h.GetRoomByID)
+	authRouter.GET("/rooms/:room_id/devices", h.GetRoomDevices)
 
 	//Devices
-	router.GET("/devices", h.GetDevices)
-	router.GET("/devices/:av_device_id", h.GetDeviceByID)
-	router.GET("/devices/:av_device_id/properties", h.GetDeviceProperties)
-	router.GET("/devices/:av_device_id/state", h.GetDeviceState)
+	authRouter.GET("/devices", h.GetDevices)
+	authRouter.GET("/devices/:av_device_id", h.GetDeviceByID)
+	authRouter.GET("/devices/:av_device_id/properties", h.GetDeviceProperties)
+	authRouter.GET("/devices/:av_device_id/state", h.GetDeviceState)
 
 	//Inputs
-	router.GET("/inputs", h.GetInputs)
-	router.GET("/inputs/:av_device_id", h.GetInputByID)
+	authRouter.GET("/inputs", h.GetInputs)
+	authRouter.GET("/inputs/:av_device_id", h.GetInputByID)
 
 	//Displays
-	router.GET("/displays", h.GetDisplays)
-	router.GET("/displays/:av_display_id", h.GetDisplayByID)
-	router.GET("/displays/:av_display_id/config", h.GetDisplayConfig)
-	router.GET("/displays/:av_display_id/state", h.GetDisplayState)
+	authRouter.GET("/displays", h.GetDisplays)
+	authRouter.GET("/displays/:av_display_id", h.GetDisplayByID)
+	authRouter.GET("/displays/:av_display_id/config", h.GetDisplayConfig)
+	authRouter.GET("/displays/:av_display_id/state", h.GetDisplayState)
 
 	//Audio Outputs
-	router.GET("/audio_outputs", h.GetAudioOutputs)
-	router.GET("/audio_outputs/:av_audio_output_id", h.GetAudioOutputByID)
-	router.GET("/audio_outputs/:av_audio_output_id/state", h.GetAudioOutputState)
+	authRouter.GET("/audio_outputs", h.GetAudioOutputs)
+	authRouter.GET("/audio_outputs/:av_audio_output_id", h.GetAudioOutputByID)
+	authRouter.GET("/audio_outputs/:av_audio_output_id/state", h.GetAudioOutputState)
 
 	// Set log level
 	router.GET("/log/:level", func(c echo.Context) error {
