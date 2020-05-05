@@ -17,15 +17,7 @@ paths:
               schema:
                 type: array
                 items:
-                  title: Room
-                  type: object
-                  properties:
-                    av_room_id:
-                      type: string
-                    room_number:
-                      type: string
-                    building_abbreviation:
-                      type: string
+                  $ref: '#/components/schemas/Room'
       operationId: get-rooms
       description: Returns basic information about AV Rooms filtered by the given query parameters
       parameters:
@@ -51,25 +43,7 @@ paths:
               schema:
                 type: array
                 items:
-                  title: Device
-                  type: object
-                  properties:
-                    av_device_id:
-                      type: string
-                    av_device_name:
-                      type: string
-                    av_device_type:
-                      type: string
-                    building_abbreviation:
-                      type: string
-                    room_number:
-                      type: string
-                  required:
-                    - av_device_id
-                    - av_device_name
-                    - av_device_type
-                    - building_abbreviation
-                    - room_number
+                  $ref: '#/components/schemas/Device'
       operationId: get-devices
       parameters:
         - schema:
@@ -105,25 +79,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Device
-                type: object
-                properties:
-                  av_device_id:
-                    type: string
-                  av_device_name:
-                    type: string
-                  av_device_type:
-                    type: string
-                  building_abbreviation:
-                    type: string
-                  room_number:
-                    type: string
-                required:
-                  - av_device_id
-                  - av_device_name
-                  - av_device_type
-                  - building_abbreviation
-                  - room_number
+                $ref: '#/components/schemas/Device'
       operationId: get-devices-device_id
       description: Returns basic information about the given device
   '/rooms/{room_id}':
@@ -146,15 +102,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Room
-                type: object
-                properties:
-                  av_room_id:
-                    type: string
-                  room_number:
-                    type: string
-                  building_abbreviation:
-                    type: string
+                $ref: '#/components/schemas/Room'
   /displays:
     get:
       summary: Your GET endpoint
@@ -167,15 +115,7 @@ paths:
               schema:
                 type: array
                 items:
-                  title: Display
-                  type: object
-                  properties:
-                    av_display_id:
-                      type: string
-                    room_number:
-                      type: string
-                    building_abbreviation:
-                      type: string
+                  $ref: '#/components/schemas/Display'
       operationId: get-displays
       description: 'Returns a collection of displays with basic information, filtered by the given query parameters  '
       parameters:
@@ -201,27 +141,7 @@ paths:
               schema:
                 type: array
                 items:
-                  title: Input
-                  type: object
-                  properties:
-                    av_device_id:
-                      type: string
-                    room_number:
-                      type: string
-                    building_abbreviation:
-                      type: string
-                    av_device_type:
-                      type: string
-                    av_outputs:
-                      type: array
-                      items:
-                        type: string
-                  required:
-                    - av_device_id
-                    - room_number
-                    - building_abbreviation
-                    - av_device_type
-                    - av_outputs
+                  $ref: '#/components/schemas/Input'
       operationId: get-inputs
       description: Returns basic information about AV Inputs filtered by the given query parameters
       parameters:
@@ -247,22 +167,7 @@ paths:
               schema:
                 type: array
                 items:
-                  title: Audio_Output
-                  type: object
-                  properties:
-                    av_audio_output_id:
-                      type: string
-                    room_number:
-                      type: string
-                    building_abbreviation:
-                      type: string
-                    av_device_type:
-                      type: string
-                  required:
-                    - av_audio_output_id
-                    - room_number
-                    - building_abbreviation
-                    - av_device_type
+                  $ref: '#/components/schemas/Audio_Output'
       operationId: get-audio_outputs
       description: Returns a collection of Audio Output devices filtered by the given query parameters
       parameters:
@@ -299,22 +204,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Audio_Output
-                type: object
-                properties:
-                  av_audio_output_id:
-                    type: string
-                  room_number:
-                    type: string
-                  building_abbreviation:
-                    type: string
-                  av_device_type:
-                    type: string
-                required:
-                  - av_audio_output_id
-                  - room_number
-                  - building_abbreviation
-                  - av_device_type
+                $ref: '#/components/schemas/Audio_Output'
       operationId: get-audio_outputs-device_id
       description: Returns basic information about the specified audio output device.
       requestBody:
@@ -336,18 +226,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Audio_Output_State
-                type: object
-                properties:
-                  av_audio_output_volume_level:
-                    title: UAPI-Value
-                    type: number
-                  av_audio_output_muted:
-                    title: UAPI-Value
-                    type: boolean
-                required:
-                  - av_audio_output_volume_level
-                  - av_audio_output_muted
+                $ref: '#/components/schemas/Audio_Output_State'
       operationId: get-audio_outputs-av_audio_output_id-state
       description: Returns state information about the given Audio Output device
   '/devices/{av_device_id}/properties':
@@ -367,18 +246,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Device_Properties
-                type: array
-                items:
-                  type: object
-                  properties:
-                    av_device_property_name:
-                      type: string
-                    av_device_property_value:
-                      type: string
-                  required:
-                    - av_device_property_name
-                    - av_device_property_value
+                $ref: '#/components/schemas/Device_Properties'
       operationId: get-devices-av_device_id-properties
       description: Returns arbitrary properties about the given devices
   '/devices/{av_device_id}/state':
@@ -398,18 +266,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Device_State_Attributes
-                type: array
-                items:
-                  type: object
-                  properties:
-                    av_device_state_attribute_name:
-                      type: string
-                    av_device_state_attribute_value:
-                      type: string
-                  required:
-                    - av_device_state_attribute_name
-                    - av_device_state_attribute_value
+                $ref: '#/components/schemas/Device_State_Attributes'
       operationId: get-devices-av_device_id-properties-devices-av_device_id-state
       description: Returns arbitrary state attributes about the given device
   '/displays/{av_display_id}':
@@ -429,15 +286,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Display
-                type: object
-                properties:
-                  av_display_id:
-                    type: string
-                  room_number:
-                    type: string
-                  building_abbreviation:
-                    type: string
+                $ref: '#/components/schemas/Display'
       operationId: get-displays-av_display_id
       description: Returns basic information about the given display
   '/displays/{av_display_id}/config':
@@ -457,19 +306,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Display_Config
-                type: object
-                properties:
-                  av_devices:
-                    title: UAPI-Value_Array
-                    type: array
-                    items:
-                      type: string
-                  av_inputs:
-                    title: UAPI-Value_Array
-                    type: array
-                    items:
-                      type: string
+                $ref: '#/components/schemas/Display_Config'
       operationId: get-displays-av_display_id-config
       description: Returns the configuration information about the given AV Display
   '/displays/{av_display_id}/state':
@@ -489,18 +326,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Display_State
-                type: object
-                properties:
-                  av_display_powered:
-                    title: UAPI-Value
-                    type: boolean
-                  av_display_blanked:
-                    title: UAPI-Value
-                    type: boolean
-                  av_display_input:
-                    title: UAPI-Value
-                    type: string
+                $ref: '#/components/schemas/Display_State'
       operationId: get-displays-av_display_id-state
       description: Returns the state of the given AV Display
   '/inputs/{av_device_id}':
@@ -520,27 +346,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Input
-                type: object
-                properties:
-                  av_device_id:
-                    type: string
-                  room_number:
-                    type: string
-                  building_abbreviation:
-                    type: string
-                  av_device_type:
-                    type: string
-                  av_outputs:
-                    type: array
-                    items:
-                      type: string
-                required:
-                  - av_device_id
-                  - room_number
-                  - building_abbreviation
-                  - av_device_type
-                  - av_outputs
+                $ref: '#/components/schemas/Input'
       operationId: get-inputs-av_device_id
       description: Returns basic information about the given Input Device
   '/rooms/{room_id}/devices':
@@ -560,24 +366,7 @@ paths:
           content:
             application/json:
               schema:
-                title: Room_Devices
-                type: object
-                properties:
-                  av_displays:
-                    title: UAPI-Value_Array
-                    type: array
-                    items:
-                      type: string
-                  av_audio_outputs:
-                    title: UAPI-Value_Array
-                    type: array
-                    items:
-                      type: string
-                  av_inputs:
-                    title: UAPI-Value_Array
-                    type: array
-                    items:
-                      type: string
+                $ref: '#/components/schemas/Room_Devices'
       operationId: get-rooms-room_id-devices
       description: Returns the devices that pertain to the given AV Room
       requestBody: {}
@@ -593,6 +382,21 @@ components:
           type: string
         building_abbreviation:
           type: string
+        av_room_description:
+          type: string
+        av_resources:
+          type: array
+          items:
+            type: object
+            properties:
+              quantity:
+                type: integer
+              resource:
+                type: string
+              locations:
+                type: array
+                items:
+                  type: string
     Room_Devices:
       title: Room_Devices
       type: object

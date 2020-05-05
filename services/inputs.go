@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func GetInputs(roomNum, bldgAbbr string) ([]models.Input, error) {
+func (s *Service) GetInputs(roomNum, bldgAbbr string) ([]models.Input, error) {
 	url := fmt.Sprintf("%s/ui-configuration/_find", os.Getenv("DB_ADDRESS"))
 	var query models.UIConfigQuery
 
@@ -42,15 +42,15 @@ func GetInputs(roomNum, bldgAbbr string) ([]models.Input, error) {
 
 	var inputs []models.Input
 	for _, rm := range resp.Docs {
-		s := strings.Split(rm.ID, "-")
+		parts := strings.Split(rm.ID, "-")
 		for _, in := range rm.InputConfiguration {
 			deviceID := fmt.Sprintf("%s-%s", rm.ID, in.Name)
 			next := models.Input{
 				DeviceID:   deviceID,
-				RoomNum:    s[1],
-				BldgAbbr:   s[0],
-				DeviceType: getDeviceType(deviceID),
-				Outputs:    getInputDisplays(in.Name, &rm),
+				RoomNum:    parts[1],
+				BldgAbbr:   parts[0],
+				DeviceType: s.getDeviceType(deviceID),
+				Outputs:    s.getInputDisplays(in.Name, &rm),
 			}
 			inputs = append(inputs, next)
 		}
@@ -59,11 +59,11 @@ func GetInputs(roomNum, bldgAbbr string) ([]models.Input, error) {
 	return inputs, nil
 }
 
-func GetInputByID(id string) (*models.Input, error) {
+func (s *Service) GetInputByID(id string) (*models.Input, error) {
 	log.Log.Info("searching inputs by id", zap.String("id", id))
-	s := strings.Split(id, "-")
+	parts := strings.Split(id, "-")
 
-	device, err := GetDeviceByID(id)
+	device, err := s.GetDeviceByID(id)
 	if err != nil {
 		log.Log.Errorf("failed to find input in database", zap.Error(err))
 		return nil, err
@@ -71,7 +71,7 @@ func GetInputByID(id string) (*models.Input, error) {
 
 	var query models.UIConfigQuery
 	query.Limit = 1000
-	query.Selector.ID.Regex = fmt.Sprintf("%s-%s$", s[0], s[1])
+	query.Selector.ID.Regex = fmt.Sprintf("%s-%s$", parts[0], parts[1])
 	url := fmt.Sprintf("%s/ui-configuration/_find", os.Getenv("DB_ADDRESS"))
 
 	var resp models.InputResponse
@@ -86,19 +86,19 @@ func GetInputByID(id string) (*models.Input, error) {
 		RoomNum:    device.RoomNum,
 		BldgAbbr:   device.BldgAbbr,
 		DeviceType: device.DeviceType,
-		Outputs:    getInputDisplays(s[2], &resp.Docs[0]),
+		Outputs:    s.getInputDisplays(parts[2], &resp.Docs[0]),
 	}
 
 	return input, nil
 }
 
-func getInputDisplays(inputID string, resp *models.InputDB) []string {
+func (s *Service) getInputDisplays(inputID string, resp *models.InputDB) []string {
 	var displays []string
-	s := strings.Split(resp.ID, "-")
+	parts := strings.Split(resp.ID, "-")
 	for i, p := range resp.Presets {
 		for _, in := range p.Inputs {
 			if inputID == in {
-				displays = append(displays, fmt.Sprintf("%s-%s-Display%d", s[0], s[1], (i + 1)))
+				displays = append(displays, fmt.Sprintf("%s-%s-Display%d", parts[0], parts[1], (i+1)))
 			}
 		}
 	}

@@ -2,9 +2,17 @@ package models
 
 //Rooms
 type Room struct {
-	RoomID   string `json:"av_room_id"`
-	RoomNum  string `json:"room_number"`
-	BldgAbbr string `json:"building_abbreviation"`
+	RoomID      string     `json:"av_room_id"`
+	RoomNum     string     `json:"room_number"`
+	BldgAbbr    string     `json:"building_abbreviation"`
+	Description string     `json:"av_room_description"`
+	Resources   []Resource `json:"av_resources"`
+}
+
+type Resource struct {
+	Quantity  int      `json:"quantity"`
+	Resource  string   `json:"resource"`
+	Locations []string `json:"locations"`
 }
 
 type RoomDevices struct {

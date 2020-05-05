@@ -11,15 +11,17 @@ import (
 	"github.com/labstack/echo"
 )
 
+type Service struct {
+	Services *services.Service
+}
+
 //Rooms
 
-func GetRooms(c echo.Context) error {
-	//Check auth?
-
+func (s *Service) GetRooms(c echo.Context) error {
 	roomNum := c.QueryParam("room_number")
 	bldgAbbr := c.QueryParam("building_abbreviation")
 
-	rooms, err := services.GetRooms(roomNum, bldgAbbr)
+	rooms, err := s.Services.GetRooms(roomNum, bldgAbbr)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -28,11 +30,11 @@ func GetRooms(c echo.Context) error {
 	return c.JSON(http.StatusOK, rooms)
 }
 
-func GetRoomByID(c echo.Context) error {
+func (s *Service) GetRoomByID(c echo.Context) error {
 	roomId := c.Param("room_id")
-	s := strings.Split(roomId, "-")
+	parts := strings.Split(roomId, "-")
 
-	room, err := services.GetRooms(s[1], s[0])
+	room, err := s.Services.GetRooms(parts[1], parts[0])
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -41,10 +43,10 @@ func GetRoomByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, room)
 }
 
-func GetRoomDevices(c echo.Context) error {
+func (s *Service) GetRoomDevices(c echo.Context) error {
 	roomId := c.Param("room_id")
 
-	devices, err := services.GetRoomDevices(roomId)
+	devices, err := s.Services.GetRoomDevices(roomId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -55,12 +57,12 @@ func GetRoomDevices(c echo.Context) error {
 
 //Devices
 
-func GetDevices(c echo.Context) error {
+func (s *Service) GetDevices(c echo.Context) error {
 	roomNum := c.QueryParam("room_number")
 	bldgAbbr := c.QueryParam("building_abbreviation")
 	deviceType := c.QueryParam("av_device_type")
 
-	devices, err := services.GetDevices(roomNum, bldgAbbr, deviceType)
+	devices, err := s.Services.GetDevices(roomNum, bldgAbbr, deviceType)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -69,10 +71,10 @@ func GetDevices(c echo.Context) error {
 	return c.JSON(http.StatusOK, devices)
 }
 
-func GetDeviceByID(c echo.Context) error {
+func (s *Service) GetDeviceByID(c echo.Context) error {
 	deviceId := c.Param("av_device_id")
 
-	device, err := services.GetDeviceByID(deviceId)
+	device, err := s.Services.GetDeviceByID(deviceId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -81,14 +83,14 @@ func GetDeviceByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, device)
 }
 
-func GetDeviceProperties(c echo.Context) error {
+func (s *Service) GetDeviceProperties(c echo.Context) error {
 	// deviceId := c.Param("av_device_id")
 
 	var deviceProperties []models.DeviceProperty
 	return c.JSON(http.StatusOK, deviceProperties)
 }
 
-func GetDeviceState(c echo.Context) error {
+func (s *Service) GetDeviceState(c echo.Context) error {
 	// deviceId := c.Param("av_device_id")
 
 	var deviceStateAttrs []models.DeviceStateAttribute
@@ -97,12 +99,12 @@ func GetDeviceState(c echo.Context) error {
 
 //Inputs
 
-func GetInputs(c echo.Context) error {
+func (s *Service) GetInputs(c echo.Context) error {
 
 	roomNum := c.QueryParam("room_number")
 	bldgAbbr := c.QueryParam("building_abbreviation")
 
-	inputs, err := services.GetInputs(roomNum, bldgAbbr)
+	inputs, err := s.Services.GetInputs(roomNum, bldgAbbr)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -111,10 +113,10 @@ func GetInputs(c echo.Context) error {
 	return c.JSON(http.StatusOK, inputs)
 }
 
-func GetInputByID(c echo.Context) error {
+func (s *Service) GetInputByID(c echo.Context) error {
 	deviceId := c.Param("av_device_id")
 
-	input, err := services.GetInputByID(deviceId)
+	input, err := s.Services.GetInputByID(deviceId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -125,12 +127,12 @@ func GetInputByID(c echo.Context) error {
 
 //Displays
 
-func GetDisplays(c echo.Context) error {
+func (s *Service) GetDisplays(c echo.Context) error {
 
 	roomNum := c.QueryParam("room_number")
 	bldgAbbr := c.QueryParam("building_abbreviation")
 
-	displays, err := services.GetDisplays(roomNum, bldgAbbr)
+	displays, err := s.Services.GetDisplays(roomNum, bldgAbbr)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -139,10 +141,10 @@ func GetDisplays(c echo.Context) error {
 	return c.JSON(http.StatusOK, displays)
 }
 
-func GetDisplayByID(c echo.Context) error {
+func (s *Service) GetDisplayByID(c echo.Context) error {
 	displayId := c.Param("av_display_id")
 
-	display, err := services.GetDisplayByID(displayId)
+	display, err := s.Services.GetDisplayByID(displayId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -151,10 +153,10 @@ func GetDisplayByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, display)
 }
 
-func GetDisplayConfig(c echo.Context) error {
+func (s *Service) GetDisplayConfig(c echo.Context) error {
 	displayId := c.Param("av_display_id")
 
-	displayConfig, err := services.GetDisplayConfig(displayId)
+	displayConfig, err := s.Services.GetDisplayConfig(displayId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -163,10 +165,10 @@ func GetDisplayConfig(c echo.Context) error {
 	return c.JSON(http.StatusOK, displayConfig)
 }
 
-func GetDisplayState(c echo.Context) error {
+func (s *Service) GetDisplayState(c echo.Context) error {
 	displayId := c.Param("av_display_id")
 
-	displayState, err := services.GetDisplayState(displayId)
+	displayState, err := s.Services.GetDisplayState(displayId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -177,12 +179,12 @@ func GetDisplayState(c echo.Context) error {
 
 //Audio Outputs
 
-func GetAudioOutputs(c echo.Context) error {
+func (s *Service) GetAudioOutputs(c echo.Context) error {
 	roomNum := c.QueryParam("room_number")
 	bldgAbbr := c.QueryParam("building_abbreviation")
 	deviceType := c.QueryParam("av_device_type")
 
-	outputs, err := services.GetAudioOutputs(roomNum, bldgAbbr, deviceType)
+	outputs, err := s.Services.GetAudioOutputs(roomNum, bldgAbbr, deviceType)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -191,10 +193,10 @@ func GetAudioOutputs(c echo.Context) error {
 	return c.JSON(http.StatusOK, outputs)
 }
 
-func GetAudioOutputByID(c echo.Context) error {
+func (s *Service) GetAudioOutputByID(c echo.Context) error {
 	outputId := c.Param("av_audio_output_id")
 
-	output, err := services.GetAudioOutputByID(outputId)
+	output, err := s.Services.GetAudioOutputByID(outputId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -203,10 +205,10 @@ func GetAudioOutputByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, output)
 }
 
-func GetAudioOutputState(c echo.Context) error {
+func (s *Service) GetAudioOutputState(c echo.Context) error {
 	outputId := c.Param("av_audio_output_id")
 
-	outputState, err := services.GetAudioOutputState(outputId)
+	outputState, err := s.Services.GetAudioOutputState(outputId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
