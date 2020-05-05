@@ -58,16 +58,17 @@ func DBSearch(url, method string, query, resp interface{}) error {
 	return nil
 }
 
-// makeRequest decorates the given request and then makes the request
-func (s *Service) makeRequest(method, path string, body []byte) (*http.Response, error) {
+// makeRequest makes the given request to couch and then parses the response into the
+// responseBody pointer passed in
+func (s *Service) makeRequest(method, path string, body []byte, responseBody interface{}) error {
 	url := fmt.Sprintf("%s/%s", s.Address, path)
 	log.Log.Debugf("Making couch request: %s %s", method, url)
 
 	// Create the request
 	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 	if err != nil {
-		err = fmt.Errorf("create couch request: %w", err)
-		return nil, err
+		err = fmt.Errorf("db/makeRequest create couch request: %w", err)
+		return err
 	}
 
 	// Add basic auth
@@ -75,9 +76,39 @@ func (s *Service) makeRequest(method, path string, body []byte) (*http.Response,
 
 	// Execute the request
 	res, err := http.DefaultClient.Do(req)
-	return res, err
+	if err != nil {
+		err = fmt.Errorf("db/makeRequest make request: %w", err)
+		return err
+	}
+	defer res.Body.Close()
+
+	// Check for 404
+	if res.StatusCode == http.StatusNotFound {
+		return ErrNotFound
+	}
+
+	// Check for non 200
+	if res.StatusCode != 200 {
+		return fmt.Errorf("db/makeRequest Error response from couch. Code: %d", res.StatusCode)
+	}
+
+	// Read the body
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("db/makeRequest reading response body: %w", err)
+	}
+
+	// Unmarshal
+	err = json.Unmarshal(b, responseBody)
+	if err != nil {
+		return fmt.Errorf("db/makeRequest json unmarshal: %w", err)
+	}
+
+	return err
 }
 
+// DEPRECATED: Please use the makeRequest() function that operates on Service
+// This function is left here to continue to support existing code
 func makeRequest(method, url, contentType string, body []byte, responseBody interface{}) error {
 	log.Log.Info("making http request", zap.String("dest-url", url))
 	req, err := http.NewRequest(method, url, bytes.NewReader(body))

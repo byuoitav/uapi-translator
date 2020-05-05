@@ -3,8 +3,6 @@ package db
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 )
 
 const _devicesPath = "devices"
@@ -30,37 +28,12 @@ type DeviceType struct {
 // GetDevicebyID gets a device document from couch given the id
 func (s *Service) GetDeviceByID(deviceID string) (*Device, error) {
 	path := fmt.Sprintf("%s/%s", _devicesPath, deviceID)
+	d := Device{}
 
 	// Make request
-	res, err := s.makeRequest("GET", path, nil)
+	err := s.makeRequest("GET", path, nil, &d)
 	if err != nil {
 		err = fmt.Errorf("db/GetDeviceByID make request: %w", err)
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	// Check if the document doesn't exist
-	if res.StatusCode == http.StatusNotFound {
-		return nil, ErrNotFound
-	}
-
-	// Check for error code
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("db/GetDeviceByID got non 200 from couch. Code: %d", res.StatusCode)
-	}
-
-	// Read the body
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		err = fmt.Errorf("db/GetDeviceByID read body: %w", err)
-		return nil, err
-	}
-
-	// Unmarshal
-	d := Device{}
-	err = json.Unmarshal(body, &d)
-	if err != nil {
-		err = fmt.Errorf("db/GetDeviceByID json umarshal: %w", err)
 		return nil, err
 	}
 
@@ -70,6 +43,7 @@ func (s *Service) GetDeviceByID(deviceID string) (*Device, error) {
 // GetDevicesByRoom returns an array of devices that are a part of the given room
 func (s *Service) GetDevicesByRoom(roomID string) ([]Device, error) {
 	path := fmt.Sprintf("%s/_find", _devicesPath)
+	r := DeviceResponse{}
 
 	// Format query
 	q := query{
@@ -86,28 +60,9 @@ func (s *Service) GetDevicesByRoom(roomID string) ([]Device, error) {
 	}
 
 	// Make the request
-	res, err := s.makeRequest("POST", path, body)
+	err = s.makeRequest("POST", path, body, &r)
 	if err != nil {
 		return nil, fmt.Errorf("db/GetDevicesByRoom couch request: %w", err)
-	}
-	defer res.Body.Close()
-
-	// Check for error code
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("db/GetDevicesByRoom got non 200 from couch: Code: %d", res.StatusCode)
-	}
-
-	// Read body
-	b, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("db/GetDevicesByRoom read body: %w", err)
-	}
-
-	// JSON unmarshal
-	r := DeviceResponse{}
-	err = json.Unmarshal(b, &r)
-	if err != nil {
-		return nil, fmt.Errorf("db/GetDevicesByRoom json unmarshal: %w", err)
 	}
 
 	return r.Docs, nil
@@ -116,35 +71,12 @@ func (s *Service) GetDevicesByRoom(roomID string) ([]Device, error) {
 // GetDeviceTypeByID returns the device type document for the given id
 func (s *Service) GetDeviceTypeByID(deviceTypeID string) (*DeviceType, error) {
 	path := fmt.Sprintf("%s/%s", _deviceTypesPath, deviceTypeID)
+	d := DeviceType{}
 
 	// Make request
-	res, err := s.makeRequest("GET", path, nil)
+	err := s.makeRequest("GET", path, nil, &d)
 	if err != nil {
 		return nil, fmt.Errorf("db/GetDeviceTypeByID couch request: %w", err)
-	}
-	defer res.Body.Close()
-
-	// Check for document not found
-	if res.StatusCode == http.StatusNotFound {
-		return nil, ErrNotFound
-	}
-
-	// Check for other error codes
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("db/GetDeviceTypeByID got non 200 from couch: Code: %d", res.StatusCode)
-	}
-
-	// Read the body
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("db/GetDeviceTypeByID read response: %w", err)
-	}
-
-	// Unmarshal
-	d := DeviceType{}
-	err = json.Unmarshal(body, &d)
-	if err != nil {
-		return nil, fmt.Errorf("db/GetDeviceTypeByID json unmarshal: %w", err)
 	}
 
 	return &d, nil
