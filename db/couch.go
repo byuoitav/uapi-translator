@@ -3,6 +3,7 @@ package db
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +12,30 @@ import (
 	"github.com/byuoitav/uapi-translator/log"
 	"go.uber.org/zap"
 )
+
+// ErrNotFound is the error returned by the package when a document is not found
+// to fulfill a request
+var ErrNotFound = errors.New("The requested document was not found")
+
+// Service represents a database service and the config necessary to run the service
+type Service struct {
+	Address  string
+	Username string
+	Password string
+}
+
+// search represents a search parameter in a couch _find call
+type search struct {
+	GT    string `json:"$gt,omitempty"`
+	LT    string `json:"$lt,omitempty"`
+	Regex string `json:"$regex,omitempty"`
+}
+
+// query represents a query body to be sent to couch
+type query struct {
+	Selector map[string]interface{} `json:"selector"`
+	Limit    int                    `json:"limit"`
+}
 
 func DBSearch(url, method string, query, resp interface{}) error {
 	var body []byte
@@ -31,6 +56,26 @@ func DBSearch(url, method string, query, resp interface{}) error {
 	}
 
 	return nil
+}
+
+// makeRequest decorates the given request and then makes the request
+func (s *Service) makeRequest(method, path string, body []byte) (*http.Response, error) {
+	url := fmt.Sprintf("%s/%s", s.Address, path)
+	log.Log.Debugf("Making couch request: %s %s", method, url)
+
+	// Create the request
+	req, err := http.NewRequest(method, url, bytes.NewReader(body))
+	if err != nil {
+		err = fmt.Errorf("create couch request: %w", err)
+		return nil, err
+	}
+
+	// Add basic auth
+	req.SetBasicAuth(s.Username, s.Password)
+
+	// Execute the request
+	res, err := http.DefaultClient.Do(req)
+	return res, err
 }
 
 func makeRequest(method, url, contentType string, body []byte, responseBody interface{}) error {
