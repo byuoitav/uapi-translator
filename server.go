@@ -28,7 +28,7 @@ func main() {
 	var dbUsername string
 	var dbPassword string
 
-	pflag.IntVarP(&port, "port", "p", 9101, "port to run the server on")
+	pflag.IntVarP(&port, "port", "p", 80, "port to run the server on")
 	pflag.IntVarP(&logLevel, "log-level", "l", 2, "level of logging wanted. 1=DEBUG, 2=INFO, 3=WARN, 4=ERROR, 5=PANIC")
 	pflag.StringVar(&opaURL, "opa-url", "", "URL where the OPA server can be found")
 	pflag.StringVar(&opaToken, "opa-token", "", "token to use when calling OPA")
