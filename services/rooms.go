@@ -12,7 +12,7 @@ import (
 	"github.com/byuoitav/uapi-translator/models"
 )
 
-func GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
+func (s *Service) GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
 	url := fmt.Sprintf("%s/rooms/_find", os.Getenv("DB_ADDRESS"))
 	var query models.RoomQuery
 
@@ -47,41 +47,47 @@ func GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
 		return nil, fmt.Errorf("No rooms exist under the provided search criteria")
 	}
 	for _, rm := range resp.Docs {
-		s := strings.Split(rm.ID, "-")
+		roomParts := strings.Split(rm.ID, "-")
+		resources, err := s.GetRoomResources(rm.ID)
+		if err != nil {
+			return nil, fmt.Errorf("services/GetRooms get room resources: %w", err)
+		}
 		next := models.Room{
-			RoomID:   rm.ID,
-			RoomNum:  s[1],
-			BldgAbbr: s[0],
+			RoomID:      rm.ID,
+			RoomNum:     roomParts[1],
+			BldgAbbr:    roomParts[0],
+			Description: rm.Description,
+			Resources:   resources,
 		}
 		rooms = append(rooms, next)
 	}
 	return rooms, nil
 }
 
-func GetRoomDevices(roomID string) (*models.RoomDevices, error) {
+func (s *Service) GetRoomDevices(roomID string) (*models.RoomDevices, error) {
 	// Check if room exists
-	s := strings.Split(roomID, "-")
-	_, err := GetRooms(s[1], s[0])
+	roomParts := strings.Split(roomID, "-")
+	_, err := s.GetRooms(roomParts[1], roomParts[0])
 	if err != nil {
 		return nil, fmt.Errorf("No rooms exist with the id: %s", roomID)
 	}
 
 	var devices models.RoomDevices
-	displays, err := GetDisplays(s[1], s[0])
+	displays, err := s.GetDisplays(roomParts[1], roomParts[0])
 	if err == nil {
 		for _, disp := range displays {
 			devices.Displays = append(devices.Displays, disp.DisplayID)
 		}
 	}
 
-	audioOutputs, err := GetAudioOutputs(s[1], s[0], "")
+	audioOutputs, err := s.GetAudioOutputs(roomParts[1], roomParts[0], "")
 	if err == nil {
 		for _, out := range audioOutputs {
 			devices.Outputs = append(devices.Outputs, out.OutputID)
 		}
 	}
-	
-	inputs, err := GetInputs(s[1], s[0])
+
+	inputs, err := s.GetInputs(roomParts[1], roomParts[0])
 	if err == nil {
 		for _, in := range inputs {
 			devices.Inputs = append(devices.Inputs, in.DeviceID)
@@ -89,4 +95,75 @@ func GetRoomDevices(roomID string) (*models.RoomDevices, error) {
 	}
 
 	return &devices, nil
+}
+
+// GetRoomResources returns an array of the resources associated with
+// the given roomID
+func (s *Service) GetRoomResources(roomID string) ([]models.Resource, error) {
+
+	devs, err := s.DB.GetDevicesByRoom(roomID)
+	if err != nil {
+		return nil, fmt.Errorf("services/GetRoomResources get devices: %w", err)
+	}
+
+	types := map[string]*db.DeviceType{}
+	resources := map[string]models.Resource{}
+
+	// Abstract resources from the devices
+	for _, d := range devs {
+		// Get description
+		desc := ""
+		// Check for description tag on device
+		if val, ok := d.Tags["description"]; ok {
+			desc = val
+		} else if t, ok := types[d.TypeID]; ok {
+			// If we have already pulled the type then use its description field
+			desc = t.Tags["description"]
+		} else {
+			// If we haven't pulled the type then pull it and use its description
+			t, err := s.DB.GetDeviceTypeByID(d.TypeID)
+			if err != nil {
+				return nil, fmt.Errorf("services/GetRoomResources get device type: %w", err)
+			}
+			types[t.ID] = t
+			desc = t.Tags["description"]
+		}
+
+		// Skip indescribable objects
+		if desc == "" {
+			continue
+		}
+
+		// Check to see if we are already tracking this resource type
+		if val, ok := resources[desc]; ok {
+			val.Quantity += 1 // increment quantity
+			// Append location if there is one
+			if d.Tags["location"] != "" {
+				val.Locations = append(val.Locations, d.Tags["location"])
+			}
+
+			// Update
+			resources[desc] = val
+		} else { // This is the first resource of it's kind in this list
+			r := models.Resource{}
+			r.Quantity = 1
+			r.Resource = desc
+			r.Locations = []string{}
+
+			// Append location if there is one
+			if d.Tags["location"] != "" {
+				r.Locations = append(r.Locations, d.Tags["location"])
+			}
+
+			// Put it in the map
+			resources[desc] = r
+		}
+	}
+
+	r := make([]models.Resource, len(resources))
+	for _, resource := range resources {
+		r = append(r, resource)
+	}
+
+	return r, nil
 }

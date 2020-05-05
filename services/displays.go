@@ -13,7 +13,7 @@ import (
 	"github.com/byuoitav/uapi-translator/models"
 )
 
-func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
+func (s *Service) GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 	url := fmt.Sprintf("%s/ui-configuration/_find", os.Getenv("DB_ADDRESS"))
 	var query models.UIConfigQuery
 
@@ -63,48 +63,48 @@ func GetDisplays(roomNum, bldgAbbr string) ([]models.Display, error) {
 	return displays, nil
 }
 
-func GetDisplayByID(dispID string) (*models.Display, error) {
+func (s *Service) GetDisplayByID(dispID string) (*models.Display, error) {
 	log.Log.Info("searching displays by display id", zap.String("id", dispID))
-	s, index, err := parseDisplayID(dispID)
+	parts, index, err := s.parseDisplayID(dispID)
 	if err != nil {
 		log.Log.Error("provided display id is invalid", zap.String("id", dispID), zap.Error(err))
 		return nil, err
 	}
 
-	_, err = getDisplaysFromDB(s, index, dispID)
+	_, err = s.getDisplaysFromDB(parts, index, dispID)
 	if err != nil {
 		return nil, err
 	}
 
 	display := &models.Display{
 		DisplayID: dispID,
-		RoomNum:   s[1],
-		BldgAbbr:  s[0],
+		RoomNum:   parts[1],
+		BldgAbbr:  parts[0],
 	}
 	return display, nil
 }
 
-func GetDisplayConfig(dispID string) (*models.DisplayConfig, error) {
+func (s *Service) GetDisplayConfig(dispID string) (*models.DisplayConfig, error) {
 	log.Log.Info("searching for display config", zap.String("id", dispID))
-	s, index, err := parseDisplayID(dispID)
+	parts, index, err := s.parseDisplayID(dispID)
 	if err != nil {
 		log.Log.Error("provided display id is invalid", zap.String("id", dispID), zap.Error(err))
 		return nil, err
 	}
 
-	displays, err := getDisplaysFromDB(s, index, dispID)
+	displays, err := s.getDisplaysFromDB(parts, index, dispID)
 	if err != nil {
 		return nil, err
 	}
 
 	var devices []string
 	for _, dev := range displays.Presets[index-1].Displays {
-		devices = append(devices, fmt.Sprintf("%s-%s-%s", s[0], s[1], dev))
+		devices = append(devices, fmt.Sprintf("%s-%s-%s", parts[0], parts[1], dev))
 	}
 
 	var inputs []string
 	for _, in := range displays.Presets[index-1].Inputs {
-		inputs = append(inputs, fmt.Sprintf("%s-%s-%s", s[0], s[1], in))
+		inputs = append(inputs, fmt.Sprintf("%s-%s-%s", parts[0], parts[1], in))
 	}
 
 	config := &models.DisplayConfig{
@@ -115,16 +115,16 @@ func GetDisplayConfig(dispID string) (*models.DisplayConfig, error) {
 	return config, nil
 }
 
-func GetDisplayState(dispID string) (*models.DisplayState, error) {
+func (s *Service) GetDisplayState(dispID string) (*models.DisplayState, error) {
 	log.Log.Info("searching for display state", zap.String("id", dispID))
-	s, index, err := parseDisplayID(dispID)
+	parts, index, err := s.parseDisplayID(dispID)
 	if err != nil {
 		log.Log.Error("provided display id is invalid", zap.String("id", dispID), zap.Error(err))
 		return nil, err
 	}
 
 	//send request to av api
-	url := fmt.Sprintf("%s/buildings/%s/rooms/%s", os.Getenv("AV_API_URL"), s[0], s[1])
+	url := fmt.Sprintf("%s/buildings/%s/rooms/%s", os.Getenv("AV_API_URL"), parts[0], parts[1])
 
 	var room models.RoomState
 	err = db.GetState(url, "GET", &room)
@@ -133,7 +133,7 @@ func GetDisplayState(dispID string) (*models.DisplayState, error) {
 		return nil, err
 	}
 
-	displays, err := getDisplaysFromDB(s, index, dispID)
+	displays, err := s.getDisplaysFromDB(parts, index, dispID)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func GetDisplayState(dispID string) (*models.DisplayState, error) {
 	powered, blanked, input := true, true, ""
 	var firstDisplay *models.StateDisplay
 	for _, disp := range room.Displays {
-		if i := findDisplayIndex(disp.Name, index, displays); i != -1 {
+		if i := s.findDisplayIndex(disp.Name, index, displays); i != -1 {
 			if firstDisplay != nil {
 				if input != disp.Input {
 					log.Log.Info("Different inputs within same display", zap.String("input1", input), zap.String("input2", disp.Input))
@@ -172,7 +172,7 @@ func GetDisplayState(dispID string) (*models.DisplayState, error) {
 	}
 
 	if input != "" {
-		input = fmt.Sprintf("%s-%s-%s", s[0], s[1], firstDisplay.Input)
+		input = fmt.Sprintf("%s-%s-%s", parts[0], parts[1], firstDisplay.Input)
 	}
 
 	state := &models.DisplayState{
@@ -183,15 +183,15 @@ func GetDisplayState(dispID string) (*models.DisplayState, error) {
 	return state, nil
 }
 
-func parseDisplayID(id string) ([]string, int, error) {
+func (s *Service) parseDisplayID(id string) ([]string, int, error) {
 	log.Log.Info("parsing display id", zap.String("id", id))
-	s := strings.Split(id, "-")
+	parts := strings.Split(id, "-")
 
-	if !strings.Contains(s[2], "Display") {
+	if !strings.Contains(parts[2], "Display") {
 		return nil, 0, fmt.Errorf("Invalid display id")
 	}
 
-	index, err := strconv.Atoi(strings.Trim(s[2], "Display"))
+	index, err := strconv.Atoi(strings.Trim(parts[2], "Display"))
 	if err != nil {
 		return nil, 0, fmt.Errorf("Invalid display id")
 	}
@@ -200,10 +200,10 @@ func parseDisplayID(id string) ([]string, int, error) {
 		return nil, 0, fmt.Errorf("Invalid display id")
 	}
 
-	return s, index, nil
+	return parts, index, nil
 }
 
-func findDisplayIndex(id string, presetIndex int, obj *models.DisplayDB) int {
+func (s *Service) findDisplayIndex(id string, presetIndex int, obj *models.DisplayDB) int {
 	for index, disp := range obj.Presets[presetIndex-1].Displays {
 		if id == disp {
 			return index
@@ -212,7 +212,7 @@ func findDisplayIndex(id string, presetIndex int, obj *models.DisplayDB) int {
 	return -1
 }
 
-func getDisplaysFromDB(parsedID []string, index int, dispID string) (*models.DisplayDB, error) {
+func (s *Service) getDisplaysFromDB(parsedID []string, index int, dispID string) (*models.DisplayDB, error) {
 	url := fmt.Sprintf("%s/ui-configuration/%s", os.Getenv("DB_ADDRESS"), fmt.Sprintf("%s-%s", parsedID[0], parsedID[1]))
 
 	var resp models.DisplayDB

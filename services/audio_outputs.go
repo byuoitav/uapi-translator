@@ -17,7 +17,7 @@ import (
 //Multiple outputs in one preset
 //Find audioDevices in preset - take average volume returned from av api for those displays
 
-func GetAudioOutputs(roomNum, bldgAbbr, devType string) ([]models.AudioOutput, error) {
+func (s *Service) GetAudioOutputs(roomNum, bldgAbbr, devType string) ([]models.AudioOutput, error) {
 	url := fmt.Sprintf("%s/ui-configuration/_find", os.Getenv("DB_ADDRESS"))
 	var query models.UIConfigQuery
 
@@ -48,15 +48,15 @@ func GetAudioOutputs(roomNum, bldgAbbr, devType string) ([]models.AudioOutput, e
 
 	var audioOutputs []models.AudioOutput
 	for _, rm := range resp.Docs {
-		s := strings.Split(rm.ID, "-")
+		parts := strings.Split(rm.ID, "-")
 		for i, p := range rm.Presets {
 
 			if len(p.AudioDevices) > 0 {
 				//add a master volume
 				master := models.AudioOutput{
 					OutputID:   fmt.Sprintf("%s-MasterAudio%d", rm.ID, (i + 1)),
-					RoomNum:    s[1],
-					BldgAbbr:   s[0],
+					RoomNum:    parts[1],
+					BldgAbbr:   parts[0],
 					DeviceType: "MasterAudio",
 				}
 				audioOutputs = append(audioOutputs, master)
@@ -68,9 +68,9 @@ func GetAudioOutputs(roomNum, bldgAbbr, devType string) ([]models.AudioOutput, e
 					deviceID := fmt.Sprintf("%s-%s", rm.ID, iad)
 					device := models.AudioOutput{
 						OutputID:   deviceID,
-						RoomNum:    s[1],
-						BldgAbbr:   s[0],
-						DeviceType: getDeviceType(deviceID),
+						RoomNum:    parts[1],
+						BldgAbbr:   parts[0],
+						DeviceType: s.getDeviceType(deviceID),
 					}
 					audioOutputs = append(audioOutputs, device)
 				}
@@ -82,30 +82,30 @@ func GetAudioOutputs(roomNum, bldgAbbr, devType string) ([]models.AudioOutput, e
 	return audioOutputs, nil
 }
 
-func getDeviceType(devID string) string {
-	device, err := GetDeviceByID(devID)
+func (s *Service) getDeviceType(devID string) string {
+	device, err := s.GetDeviceByID(devID)
 	if err != nil {
 		return ""
 	}
 	return device.DeviceType
 }
 
-func GetAudioOutputByID(id string) (*models.AudioOutput, error) {
+func (s *Service) GetAudioOutputByID(id string) (*models.AudioOutput, error) {
 	log.Log.Info("searching audio outputs by id", zap.String("id", id))
-	s, index, err := parseOutputID(id)
+	parts, index, err := s.parseOutputID(id)
 	if err != nil {
 		log.Log.Error("provided audio output id is invalid", zap.String("id", id), zap.Error(err))
 		return nil, err
 	}
 
-	_, err = getAudioOutputsFromDB(s, index, id)
+	_, err = s.getAudioOutputsFromDB(parts, index, id)
 	if err != nil {
 		return nil, err
 	}
 
 	var devType string
 	if index == -1 {
-		device, err := GetDeviceByID(id)
+		device, err := s.GetDeviceByID(id)
 		if err != nil {
 			return nil, err
 		}
@@ -116,30 +116,30 @@ func GetAudioOutputByID(id string) (*models.AudioOutput, error) {
 
 	output := &models.AudioOutput{
 		OutputID:   id,
-		RoomNum:    s[1],
-		BldgAbbr:   s[0],
+		RoomNum:    parts[1],
+		BldgAbbr:   parts[0],
 		DeviceType: devType,
 	}
 
 	return output, nil
 }
 
-func GetAudioOutputState(id string) (*models.AudioOutputState, error) {
+func (s *Service) GetAudioOutputState(id string) (*models.AudioOutputState, error) {
 	// get ui config
 	log.Log.Info("getting audio output state by id", zap.String("id", id))
-	s, index, err := parseOutputID(id)
+	parts, index, err := s.parseOutputID(id)
 	if err != nil {
 		log.Log.Error("provided audio output id is invalid", zap.String("id", id), zap.Error(err))
 		return nil, err
 	}
 
-	config, err := getAudioOutputsFromDB(s, index, id)
+	config, err := s.getAudioOutputsFromDB(parts, index, id)
 	if err != nil {
 		return nil, err
 	}
 
 	//Get room state from av-api
-	url := fmt.Sprintf("%s/buildings/%s/rooms/%s", os.Getenv("AV_API_URL"), s[0], s[1])
+	url := fmt.Sprintf("%s/buildings/%s/rooms/%s", os.Getenv("AV_API_URL"), parts[0], parts[1])
 
 	var room models.RoomState
 	err = db.GetState(url, "GET", &room)
@@ -147,14 +147,14 @@ func GetAudioOutputState(id string) (*models.AudioOutputState, error) {
 		log.Log.Error("failed to find audio output state in database")
 		return nil, err
 	}
-	
+
 	if index > -1 {
 		//Compare to audio devices in preset
 		var volume int
 		numDevices := 0
 		muted := false
-		for _, dev := range config.Presets[index - 1].AudioDevices {
-			i := findAudioIndex(dev, room.AudioDevices)
+		for _, dev := range config.Presets[index-1].AudioDevices {
+			i := s.findAudioIndex(dev, room.AudioDevices)
 			if i > -1 {
 				numDevices++
 				volume += room.AudioDevices[i].Volume
@@ -169,32 +169,31 @@ func GetAudioOutputState(id string) (*models.AudioOutputState, error) {
 		}
 		return &models.AudioOutputState{
 			Volume: volume,
-			Muted: muted,
+			Muted:  muted,
 		}, nil
 	} else {
 
 		//Check if the id is found in the independent audio devices
 		for _, p := range config.Presets {
 			for _, dev := range p.IndependentAudioDevices {
-				if dev == s[2] {
-					i := findAudioIndex(dev, room.AudioDevices)
+				if dev == parts[2] {
+					i := s.findAudioIndex(dev, room.AudioDevices)
 					if i > -1 {
-						return  &models.AudioOutputState {
+						return &models.AudioOutputState{
 							Volume: room.AudioDevices[i].Volume,
-							Muted: room.AudioDevices[i].Muted,
+							Muted:  room.AudioDevices[i].Muted,
 						}, nil
 					}
 				}
 			}
 		}
-		
 	}
-	
+
 	log.Log.Infof("no state found for audio output device: %s", id)
 	return nil, fmt.Errorf("no state found for audio output device: %s", id)
 }
 
-func findAudioIndex(name string, devices []models.StateAudioDevice) int {
+func (s *Service) findAudioIndex(name string, devices []models.StateAudioDevice) int {
 	for i, dev := range devices {
 		if name == dev.Name {
 			return i
@@ -203,12 +202,12 @@ func findAudioIndex(name string, devices []models.StateAudioDevice) int {
 	return -1
 }
 
-func parseOutputID(id string) ([]string, int, error) {
+func (s *Service) parseOutputID(id string) ([]string, int, error) {
 	log.Log.Info("parsing audio output id", zap.String("id", id))
-	s := strings.Split(id, "-")
+	parts := strings.Split(id, "-")
 
-	if strings.Contains(s[2], "MasterAudio") {
-		index, err := strconv.Atoi(strings.Trim(s[2], "MasterAudio"))
+	if strings.Contains(parts[2], "MasterAudio") {
+		index, err := strconv.Atoi(strings.Trim(parts[2], "MasterAudio"))
 		if err != nil {
 			return nil, 0, fmt.Errorf("Invalid audio output id")
 		}
@@ -217,12 +216,12 @@ func parseOutputID(id string) ([]string, int, error) {
 			return nil, 0, fmt.Errorf("Invalid audio output id")
 		}
 
-		return s, index, nil
+		return parts, index, nil
 	}
-	return s, -1, nil
+	return parts, -1, nil
 }
 
-func getAudioOutputsFromDB(parsedID []string, index int, id string) (*models.AudioOutputDB, error) {
+func (s *Service) getAudioOutputsFromDB(parsedID []string, index int, id string) (*models.AudioOutputDB, error) {
 	url := fmt.Sprintf("%s/ui-configuration/%s", os.Getenv("DB_ADDRESS"), fmt.Sprintf("%s-%s", parsedID[0], parsedID[1]))
 
 	var resp models.AudioOutputDB

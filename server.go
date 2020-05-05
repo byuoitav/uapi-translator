@@ -9,9 +9,11 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/byuoitav/uapi-translator/db"
 	"github.com/byuoitav/uapi-translator/handlers"
 	"github.com/byuoitav/uapi-translator/log"
 	"github.com/byuoitav/uapi-translator/middleware"
+	"github.com/byuoitav/uapi-translator/services"
 	"github.com/labstack/echo"
 	"github.com/spf13/pflag"
 )
@@ -22,12 +24,18 @@ func main() {
 	var opaURL string
 	var opaToken string
 	var disableAuth bool
+	var dbAddress string
+	var dbUsername string
+	var dbPassword string
 
 	pflag.IntVarP(&port, "port", "p", 9101, "port to run the server on")
 	pflag.IntVarP(&logLevel, "log-level", "l", 2, "level of logging wanted. 1=DEBUG, 2=INFO, 3=WARN, 4=ERROR, 5=PANIC")
 	pflag.StringVar(&opaURL, "opa-url", "", "URL where the OPA server can be found")
 	pflag.StringVar(&opaToken, "opa-token", "", "token to use when calling OPA")
 	pflag.BoolVar(&disableAuth, "disable-auth", false, "disables authz/n checks")
+	pflag.StringVar(&dbAddress, "db-address", "", "address to the couch db")
+	pflag.StringVar(&dbUsername, "db-username", "", "username for the couch db")
+	pflag.StringVar(&dbPassword, "db-password", "", "password for the couch db")
 	pflag.Parse()
 
 	setLog := func(level int) error {
@@ -75,31 +83,43 @@ func main() {
 		router.Use(opaClient.Authorize)
 	}
 
+	db := db.Service{
+		Address:  dbAddress,
+		Username: dbUsername,
+		Password: dbPassword,
+	}
+	s := services.Service{
+		DB: &db,
+	}
+	h := handlers.Service{
+		Services: &s,
+	}
+
 	//Rooms
-	router.GET("/rooms", handlers.GetRooms)
-	router.GET("/rooms/:room_id", handlers.GetRoomByID)
-	router.GET("/rooms/:room_id/devices", handlers.GetRoomDevices)
+	router.GET("/rooms", h.GetRooms)
+	router.GET("/rooms/:room_id", h.GetRoomByID)
+	router.GET("/rooms/:room_id/devices", h.GetRoomDevices)
 
 	//Devices
-	router.GET("/devices", handlers.GetDevices)
-	router.GET("/devices/:av_device_id", handlers.GetDeviceByID)
-	router.GET("/devices/:av_device_id/properties", handlers.GetDeviceProperties)
-	router.GET("/devices/:av_device_id/state", handlers.GetDeviceState)
+	router.GET("/devices", h.GetDevices)
+	router.GET("/devices/:av_device_id", h.GetDeviceByID)
+	router.GET("/devices/:av_device_id/properties", h.GetDeviceProperties)
+	router.GET("/devices/:av_device_id/state", h.GetDeviceState)
 
 	//Inputs
-	router.GET("/inputs", handlers.GetInputs)
-	router.GET("/inputs/:av_device_id", handlers.GetInputByID)
+	router.GET("/inputs", h.GetInputs)
+	router.GET("/inputs/:av_device_id", h.GetInputByID)
 
 	//Displays
-	router.GET("/displays", handlers.GetDisplays)
-	router.GET("/displays/:av_display_id", handlers.GetDisplayByID)
-	router.GET("/displays/:av_display_id/config", handlers.GetDisplayConfig)
-	router.GET("/displays/:av_display_id/state", handlers.GetDisplayState)
+	router.GET("/displays", h.GetDisplays)
+	router.GET("/displays/:av_display_id", h.GetDisplayByID)
+	router.GET("/displays/:av_display_id/config", h.GetDisplayConfig)
+	router.GET("/displays/:av_display_id/state", h.GetDisplayState)
 
 	//Audio Outputs
-	router.GET("/audio_outputs", handlers.GetAudioOutputs)
-	router.GET("/audio_outputs/:av_audio_output_id", handlers.GetAudioOutputByID)
-	router.GET("/audio_outputs/:av_audio_output_id/state", handlers.GetAudioOutputState)
+	router.GET("/audio_outputs", h.GetAudioOutputs)
+	router.GET("/audio_outputs/:av_audio_output_id", h.GetAudioOutputByID)
+	router.GET("/audio_outputs/:av_audio_output_id/state", h.GetAudioOutputState)
 
 	// Set log level
 	router.GET("/log/:level", func(c echo.Context) error {

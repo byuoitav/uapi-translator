@@ -12,7 +12,7 @@ import (
 	"github.com/byuoitav/uapi-translator/models"
 )
 
-func GetDevices(roomNum, bldgAbbr, devType string) ([]models.Device, error) {
+func (s *Service) GetDevices(roomNum, bldgAbbr, devType string) ([]models.Device, error) {
 	url := fmt.Sprintf("%s/devices/_find", os.Getenv("DB_ADDRESS"))
 	var query models.DeviceQuery
 
@@ -56,20 +56,20 @@ func GetDevices(roomNum, bldgAbbr, devType string) ([]models.Device, error) {
 		return nil, fmt.Errorf("No devices exist under the provided search criteria")
 	}
 	for _, dev := range resp.Docs {
-		s := strings.Split(dev.ID, "-")
+		parts := strings.Split(dev.ID, "-")
 		next := models.Device{
 			DeviceID:   dev.ID,
 			DeviceName: dev.Name,
 			DeviceType: dev.Type.ID,
-			BldgAbbr:   s[0],
-			RoomNum:    s[1],
+			BldgAbbr:   parts[0],
+			RoomNum:    parts[1],
 		}
 		devices = append(devices, next)
 	}
 	return devices, nil
 }
 
-func GetDeviceByID(deviceID string) (*models.Device, error) {
+func (s *Service) GetDeviceByID(deviceID string) (*models.Device, error) {
 	log.Log.Info("searching devices by device id", zap.String("id", deviceID))
 	url := fmt.Sprintf("%s/devices/%s", os.Getenv("DB_ADDRESS"), deviceID)
 	var resp models.DeviceDB
@@ -80,13 +80,13 @@ func GetDeviceByID(deviceID string) (*models.Device, error) {
 		return nil, fmt.Errorf("Failed to find device with id: %s", deviceID)
 	}
 
-	s := strings.Split(resp.ID, "-")
+	parts := strings.Split(resp.ID, "-")
 	device := &models.Device{
 		DeviceID:   resp.ID,
 		DeviceName: resp.Name,
 		DeviceType: resp.Type.ID,
-		BldgAbbr:   s[0],
-		RoomNum:    s[1],
+		BldgAbbr:   parts[0],
+		RoomNum:    parts[1],
 	}
 	return device, nil
 }
