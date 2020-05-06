@@ -34,7 +34,7 @@ func (s *Service) GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
 		query.Selector.ID.GT = "\x00"
 	}
 
-	var resp models.RoomResponse
+	var resp db.RoomResponse
 	err := db.DBSearch(url, "POST", &query, &resp)
 	if err != nil {
 		log.Log.Error("failed to search for rooms in database", zap.Error(err))
@@ -56,7 +56,7 @@ func (s *Service) GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
 			RoomID:      rm.ID,
 			RoomNum:     roomParts[1],
 			BldgAbbr:    roomParts[0],
-			Description: rm.Description,
+			Description: rm.Tags["Description"],
 			Resources:   resources,
 		}
 		rooms = append(rooms, next)
