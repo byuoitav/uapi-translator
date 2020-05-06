@@ -161,8 +161,10 @@ func (s *Service) GetRoomResources(roomID string) ([]models.Resource, error) {
 	}
 
 	r := make([]models.Resource, len(resources))
+	i := 0
 	for _, resource := range resources {
-		r = append(r, resource)
+		r[i] = resource
+		i++
 	}
 
 	return r, nil
