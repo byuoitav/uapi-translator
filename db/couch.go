@@ -74,6 +74,8 @@ func (s *Service) makeRequest(method, path string, body []byte, responseBody int
 	// Add basic auth
 	req.SetBasicAuth(s.Username, s.Password)
 
+	req.Header.Add("content-type", "application/json")
+
 	// Execute the request
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
