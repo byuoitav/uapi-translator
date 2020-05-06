@@ -56,7 +56,7 @@ func (s *Service) GetRooms(roomNum, bldgAbbr string) ([]models.Room, error) {
 			RoomID:      rm.ID,
 			RoomNum:     roomParts[1],
 			BldgAbbr:    roomParts[0],
-			Description: rm.Tags["Description"],
+			Description: rm.Tags["description"],
 			Resources:   resources,
 		}
 		rooms = append(rooms, next)
