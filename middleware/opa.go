@@ -26,6 +26,10 @@ type opaResult struct {
 }
 
 type opaRequest struct {
+	Input requestData `json:"input"`
+}
+
+type requestData struct {
 	User   string `json:"user"`
 	Path   string `json:"path"`
 	Method string `json:"method"`
@@ -36,9 +40,11 @@ func (client *OPAClient) Authorize(next echo.HandlerFunc) echo.HandlerFunc {
 		// Prep the request
 		oReq, err := json.Marshal(
 			opaRequest{
-				User:   "",
-				Path:   c.Path(),
-				Method: c.Request().Method,
+				Input: requestData{
+					User:   "",
+					Path:   c.Path(),
+					Method: c.Request().Method,
+				},
 			},
 		)
 		if err != nil {
